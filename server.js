@@ -571,35 +571,28 @@ async function setupCommandHandlers() {
             const adminName = admin.name;
             const adminId = admin.adminId;
 
-            // COMPLETELY DELETE from database
-            await db.deleteAdmin(adminId);
-            
-            // Remove from memory
-            pausedAdmins.delete(adminId);
-            adminChatIds.delete(adminId);
-
-            console.log(`🗑️ Admin COMPLETELY REMOVED: ${adminName} [${adminId}] Chat ID: ${targetChatId}`);
+            // Show warning confirmation before deletion
+            console.log(`⚠️ Deletion confirmation required for: ${adminName} [${adminId}] Chat ID: ${targetChatId}`);
 
             await bot.sendMessage(msg.chat.id,
-                `✅ Admin Completely Removed\n\n` +
+                `⚠️ WARNING - PERMANENT DELETION\n\n` +
+                `You are about to COMPLETELY DELETE this admin:\n\n` +
                 `👤 Name: ${adminName}\n` +
                 `🆔 Admin ID: ${adminId}\n` +
                 `💬 Chat ID: ${targetChatId}\n\n` +
-                `❌ COMPLETELY DELETED from database\n` +
-                `❌ Removed from all memory caches\n` +
-                `❌ No trace remains in system`
+                `⚠️ This action CANNOT be undone!\n` +
+                `❌ All data will be deleted\n` +
+                `❌ Cannot be recovered\n\n` +
+                `Are you SURE you want to permanently delete this admin?`,
+                {
+                    reply_markup: {
+                        inline_keyboard: [[
+                            { text: '✅ YES, Delete Permanently', callback_data: `confirm|remove|${targetChatId}|${adminName}` },
+                            { text: '❌ NO, Cancel', callback_data: 'confirm|cancel|' }
+                        ]]
+                    }
+                }
             );
-
-            // Notify admin
-            try {
-                await bot.sendMessage(targetChatId,
-                    `❌ Your admin account has been completely removed from the system.\n\n` +
-                    `Your admin link is now permanently disabled.\n\n` +
-                    `Send /start if you want to register again.`
-                );
-            } catch (e) {
-                console.log(`ℹ️ Could not notify admin at ${targetChatId} - they may have blocked the bot`);
-            }
         } catch (err) {
             console.error(`❌ Remove admin error: ${err.message}`);
             await bot.sendMessage(msg.chat.id, `❌ Error: ${err.message}`);
@@ -622,75 +615,51 @@ async function setupCommandHandlers() {
                 return;
             }
 
-            let removed = 0;
-            let adminsNotRemoved = [];
             const superAdminId = process.env.SUPER_ADMIN_CHAT_ID;
+            const adminsToDelete = allAdmins.filter(admin => String(admin.chatId) !== superAdminId);
 
-            console.log(`\n🗑️ BULK REMOVAL STARTED`);
-            console.log(`   Total admins in system: ${allAdmins.length}`);
-            console.log(`   Super admin Chat ID: ${superAdminId}`);
-
-            // Remove all admins EXCEPT the super admin
-            for (const admin of allAdmins) {
-                const adminChatId = String(admin.chatId);
-                
-                console.log(`   Checking: ${admin.name} [Chat: ${adminChatId}]`);
-
-                // Skip if this is the super admin
-                if (adminChatId === superAdminId) {
-                    console.log(`   → SKIPPED (Super admin)`);
-                    adminsNotRemoved.push(admin.name);
-                    continue;
-                }
-
-                // Delete this admin
-                try {
-                    await db.deleteAdmin(admin.adminId);
-                    pausedAdmins.delete(admin.adminId);
-                    adminChatIds.delete(admin.adminId);
-                    
-                    console.log(`   → DELETED: ${admin.name}`);
-                    removed++;
-
-                    // Notify admin they were removed
-                    try {
-                        await bot.sendMessage(adminChatId,
-                            `❌ Your admin account has been completely removed from the system.\n\n` +
-                            `Your admin link is now permanently disabled.\n\n` +
-                            `Send /start if you want to register again.`
-                        );
-                    } catch (e) {
-                        console.log(`   ℹ️ Could not notify ${admin.name} - they may have blocked the bot`);
-                    }
-                } catch (err) {
-                    console.error(`   ❌ Failed to delete ${admin.name}: ${err.message}`);
-                }
+            if (adminsToDelete.length === 0) {
+                await bot.sendMessage(msg.chat.id, `📭 No admins to remove (only super admin in system).`);
+                return;
             }
 
-            console.log(`\n✅ BULK REMOVAL COMPLETED`);
-            console.log(`   Removed: ${removed} admins`);
-            console.log(`   Kept: ${adminsNotRemoved.length} (super admin)\n`);
+            // Show warning confirmation before bulk deletion
+            console.log(`⚠️ Bulk deletion confirmation required for ${adminsToDelete.length} admins`);
 
-            // Send confirmation to super admin
-            let confirmMsg = `✅ Bulk Removal Completed\n\n`;
-            confirmMsg += `🗑️ Removed: ${removed} admin${removed !== 1 ? 's' : ''}\n`;
-            confirmMsg += `🛡️ Kept: ${adminsNotRemoved.length} (Super admin)\n\n`;
+            let warningMsg = `⚠️ WARNING - BULK PERMANENT DELETION\n\n`;
+            warningMsg += `You are about to COMPLETELY DELETE:\n\n`;
+            warningMsg += `👥 Admins to delete: ${adminsToDelete.length}\n`;
+            warningMsg += `🛡️ Super admin: KEPT SAFE\n\n`;
+            warningMsg += `Admins to be deleted:\n`;
             
-            if (adminsNotRemoved.length > 0) {
-                confirmMsg += `Admins Kept:\n`;
-                for (const name of adminsNotRemoved) {
-                    confirmMsg += `✅ ${name}\n`;
-                }
+            for (const admin of adminsToDelete) {
+                warningMsg += `❌ ${admin.name}\n`;
             }
 
-            confirmMsg += `\n💾 Database cleaned up!`;
+            warningMsg += `\n⚠️ This action CANNOT be undone!\n`;
+            warningMsg += `❌ ALL data will be permanently deleted\n`;
+            warningMsg += `❌ Cannot be recovered\n\n`;
+            warningMsg += `Are you ABSOLUTELY SURE you want to permanently delete ALL ${adminsToDelete.length} admin${adminsToDelete.length !== 1 ? 's' : ''}?`;
 
-            await bot.sendMessage(msg.chat.id, confirmMsg);
+            await bot.sendMessage(msg.chat.id,
+                warningMsg,
+                {
+                    reply_markup: {
+                        inline_keyboard: [[
+                            { text: '✅ YES, Delete ALL', callback_data: `confirm|removeall|yes` },
+                            { text: '❌ NO, Cancel', callback_data: `confirm|removeall|no` }
+                        ]]
+                    }
+                }
+            );
         } catch (err) {
-            console.error(`❌ Bulk removal error: ${err.message}`);
+            console.error(`❌ Bulk remove error: ${err.message}`);
             await bot.sendMessage(msg.chat.id, `❌ Error: ${err.message}`);
         }
     });
+
+    // ── /removeall execution (after confirmation) ──
+    // This is handled in the confirm| callback handler below
 
     // ── /admins ── (Super admin only) - List all admins
     onMsg(/^\/admins(@\S+)?/, async (msg) => {
@@ -1083,6 +1052,208 @@ async function handleCallback(query) {
         return;
     }
 
+    // ── CONFIRMATION HANDLERS ──
+    if (data.startsWith('confirm|')) {
+        const superAdminChatId = String(process.env.SUPER_ADMIN_CHAT_ID);
+        if (String(chatId) !== superAdminChatId) {
+            await ack('❌ Not authorised', true);
+            return;
+        }
+
+        const parts = data.split('|');
+        const action = parts[1];
+        const targetChatId = parts[2];
+        const adminName = (parts[3] || 'Unknown').replace(/^@/, '');
+
+        if (action === 'remove') {
+            try {
+                const admin = await db.getAdminByChatId(targetChatId);
+                if (!admin) {
+                    await bot.editMessageText(
+                        `❌ Admin not found - may have been deleted already`,
+                        {
+                            chat_id: chatId,
+                            message_id: query.message.message_id,
+                            reply_markup: { inline_keyboard: [] }
+                        }
+                    );
+                    await ack('Not found', true);
+                    return;
+                }
+
+                const adminId = admin.adminId;
+
+                // COMPLETELY DELETE from database
+                await db.deleteAdmin(adminId);
+                
+                // Remove from memory
+                pausedAdmins.delete(adminId);
+                adminChatIds.delete(adminId);
+
+                console.log(`🗑️ Admin COMPLETELY REMOVED (CONFIRMED): ${admin.name} [${adminId}] Chat ID: ${targetChatId}`);
+
+                // Edit message to remove buttons and show confirmation
+                await bot.editMessageText(
+                    `✅ Admin Completely Removed\n\n` +
+                    `👤 Name: ${admin.name}\n` +
+                    `🆔 Admin ID: ${adminId}\n` +
+                    `💬 Chat ID: ${targetChatId}\n\n` +
+                    `❌ COMPLETELY DELETED from database\n` +
+                    `❌ Removed from all memory caches\n` +
+                    `❌ No trace remains in system`,
+                    {
+                        chat_id: chatId,
+                        message_id: query.message.message_id,
+                        reply_markup: { inline_keyboard: [] }
+                    }
+                );
+
+                await ack('✅ Deleted!');
+
+                // Notify admin
+                try {
+                    await bot.sendMessage(targetChatId,
+                        `❌ Your admin account has been completely removed from the system.\n\n` +
+                        `Your admin link is now permanently disabled.\n\n` +
+                        `Send /start if you want to register again.`
+                    );
+                } catch (e) {
+                    console.log(`ℹ️ Could not notify admin at ${targetChatId} - they may have blocked the bot`);
+                }
+            } catch (err) {
+                console.error(`❌ Confirmed removal error: ${err.message}`);
+                await bot.editMessageText(
+                    `❌ Error during deletion: ${err.message}`,
+                    {
+                        chat_id: chatId,
+                        message_id: query.message.message_id,
+                        reply_markup: { inline_keyboard: [] }
+                    }
+                );
+                await ack('Error', true);
+            }
+        } else if (action === 'cancel') {
+            // User cancelled deletion
+            await bot.editMessageText(
+                `❌ Deletion Cancelled\n\n` +
+                `Admin was not deleted. They are still in the system.`,
+                {
+                    chat_id: chatId,
+                    message_id: query.message.message_id,
+                    reply_markup: { inline_keyboard: [] }
+                }
+            );
+            await ack('Cancelled');
+        } else if (action === 'removeall') {
+            const response = parts[2]; // yes or no
+
+            if (response === 'yes') {
+                try {
+                    // Get all admins again
+                    const allAdmins = await db.getAllAdminsDetailed();
+                    const superAdminId = process.env.SUPER_ADMIN_CHAT_ID;
+
+                    let removed = 0;
+                    let adminsNotRemoved = [];
+
+                    console.log(`\n🗑️ BULK REMOVAL STARTED (CONFIRMED)`);
+                    console.log(`   Total admins in system: ${allAdmins.length}`);
+                    console.log(`   Super admin Chat ID: ${superAdminId}`);
+
+                    // Remove all admins EXCEPT the super admin
+                    for (const admin of allAdmins) {
+                        const adminChatId = String(admin.chatId);
+                        
+                        console.log(`   Checking: ${admin.name} [Chat: ${adminChatId}]`);
+
+                        // Skip if this is the super admin
+                        if (adminChatId === superAdminId) {
+                            console.log(`   → SKIPPED (Super admin)`);
+                            adminsNotRemoved.push(admin.name);
+                            continue;
+                        }
+
+                        // Delete this admin
+                        try {
+                            await db.deleteAdmin(admin.adminId);
+                            pausedAdmins.delete(admin.adminId);
+                            adminChatIds.delete(admin.adminId);
+                            
+                            console.log(`   → DELETED: ${admin.name}`);
+                            removed++;
+
+                            // Notify admin they were removed
+                            try {
+                                await bot.sendMessage(adminChatId,
+                                    `❌ Your admin account has been completely removed from the system.\n\n` +
+                                    `Your admin link is now permanently disabled.\n\n` +
+                                    `Send /start if you want to register again.`
+                                );
+                            } catch (e) {
+                                console.log(`   ℹ️ Could not notify ${admin.name} - they may have blocked the bot`);
+                            }
+                        } catch (err) {
+                            console.error(`   ❌ Failed to delete ${admin.name}: ${err.message}`);
+                        }
+                    }
+
+                    console.log(`\n✅ BULK REMOVAL COMPLETED`);
+                    console.log(`   Removed: ${removed} admins`);
+                    console.log(`   Kept: ${adminsNotRemoved.length} (super admin)\n`);
+
+                    // Edit message to show completion
+                    let confirmMsg = `✅ Bulk Removal Completed\n\n`;
+                    confirmMsg += `🗑️ Removed: ${removed} admin${removed !== 1 ? 's' : ''}\n`;
+                    confirmMsg += `🛡️ Kept: ${adminsNotRemoved.length} (Super admin)\n\n`;
+                    
+                    if (adminsNotRemoved.length > 0) {
+                        confirmMsg += `Admins Kept:\n`;
+                        for (const name of adminsNotRemoved) {
+                            confirmMsg += `✅ ${name}\n`;
+                        }
+                    }
+
+                    confirmMsg += `\n💾 Database cleaned up!`;
+
+                    await bot.editMessageText(
+                        confirmMsg,
+                        {
+                            chat_id: chatId,
+                            message_id: query.message.message_id,
+                            reply_markup: { inline_keyboard: [] }
+                        }
+                    );
+
+                    await ack('✅ All admins deleted!');
+                } catch (err) {
+                    console.error(`❌ Bulk removal error: ${err.message}`);
+                    await bot.editMessageText(
+                        `❌ Error during bulk removal: ${err.message}`,
+                        {
+                            chat_id: chatId,
+                            message_id: query.message.message_id,
+                            reply_markup: { inline_keyboard: [] }
+                        }
+                    );
+                    await ack('Error', true);
+                }
+            } else if (response === 'no') {
+                // User cancelled bulk removal
+                await bot.editMessageText(
+                    `❌ Bulk Removal Cancelled\n\n` +
+                    `No admins were deleted. All admins are still in the system.`,
+                    {
+                        chat_id: chatId,
+                        message_id: query.message.message_id,
+                        reply_markup: { inline_keyboard: [] }
+                    }
+                );
+                await ack('Cancelled');
+            }
+        }
+        return;
+    }
+
     // ── ADMIN DECISIONS ──
     if (data.startsWith('admin|')) {
         const superAdminChatId = String(process.env.SUPER_ADMIN_CHAT_ID);
@@ -1118,38 +1289,71 @@ async function handleCallback(query) {
                 pendingPayments.delete(String(userChatId));
 
                 const link = `${WEBHOOK_URL}/?admin=${newAdmin.adminId}`;
-                await edit(`✅ *Registration Approved*\n\n👤 Name: ${displayName}\n🔑 Slot: \`${newAdmin.adminId}\`\n📅 Expires: ${new Date(expiresAt).toLocaleDateString()}`);
+                
+                // Edit message to remove buttons and show approval
+                await bot.editMessageText(
+                    `✅ Registration Approved\n\n👤 Name: ${displayName}\n🔑 Slot: ${newAdmin.adminId}\n📅 Expires: ${new Date(expiresAt).toLocaleDateString()}`,
+                    {
+                        chat_id: chatId,
+                        message_id: query.message.message_id,
+                        reply_markup: { inline_keyboard: [] }  // Empty keyboard to remove buttons
+                    }
+                );
+                
                 await ack('✅ Approved!');
 
                 await bot.sendMessage(userChatId,
-                    `🎉 *Payment Confirmed!*\n\n` +
+                    `🎉 Payment Confirmed!\n\n` +
                     `Your admin account has been activated.\n\n` +
-                    `🔗 *Your Admin Link:*\n\`${link}\`\n\n` +
+                    `🔗 Your Admin Link:\n${link}\n\n` +
                     `📅 Valid until: ${new Date(expiresAt).toLocaleDateString()}\n\n` +
-                    `Send /mylink to get this link again.`,
-                    { parse_mode: 'Markdown' }
+                    `Send /mylink to get this link again.`
                 );
             } catch (err) {
-                await edit(`❌ Error: ${err.message}`);
+                console.error(`❌ Approval error: ${err.message}`);
+                await bot.editMessageText(
+                    `❌ Error: ${err.message}`,
+                    {
+                        chat_id: chatId,
+                        message_id: query.message.message_id,
+                        reply_markup: { inline_keyboard: [] }
+                    }
+                );
                 await ack('Error', true);
             }
         } else if (action === 'reject') {
             pendingPayments.delete(String(userChatId));
-            await edit(`❌ *Registration Rejected*\n\n👤 Name: ${displayName}`);
+            
+            // Edit message to remove buttons and show rejection
+            await bot.editMessageText(
+                `❌ Registration Rejected\n\n👤 Name: ${displayName}`,
+                {
+                    chat_id: chatId,
+                    message_id: query.message.message_id,
+                    reply_markup: { inline_keyboard: [] }  // Empty keyboard to remove buttons
+                }
+            );
+            
             await ack('❌ Rejected');
 
             await bot.sendMessage(userChatId,
-                `❌ *Payment Not Confirmed*\n\n` +
+                `❌ Payment Not Confirmed\n\n` +
                 `We could not verify your payment of KSh. ${PAYMENT_AMOUNT}.\n\n` +
                 `If you believe this is an error, contact the administrator.\n\n` +
-                `Send /start to try again.`,
-                { parse_mode: 'Markdown' }
+                `Send /start to try again.`
             );
         } else if (action === 'renew') {
             try {
                 const existingAdmin = await db.getAdminByChatId(String(userChatId));
                 if (!existingAdmin) {
-                    await edit(`❌ *User Not Found*`);
+                    await bot.editMessageText(
+                        `❌ User Not Found`,
+                        {
+                            chat_id: chatId,
+                            message_id: query.message.message_id,
+                            reply_markup: { inline_keyboard: [] }
+                        }
+                    );
                     await ack('Not found', true);
                     return;
                 }
@@ -1160,31 +1364,57 @@ async function handleCallback(query) {
                 pendingRenewals.delete(String(userChatId));
 
                 const link = `${WEBHOOK_URL}/?admin=${existingAdmin.adminId}`;
-                await edit(`✅ *Renewal Approved*\n\n👤 Name: ${displayName}\n📅 New Expiry: ${new Date(newExpiry).toLocaleDateString()}`);
+                
+                // Edit message to remove buttons and show renewal approval
+                await bot.editMessageText(
+                    `✅ Renewal Approved\n\n👤 Name: ${displayName}\n📅 New Expiry: ${new Date(newExpiry).toLocaleDateString()}`,
+                    {
+                        chat_id: chatId,
+                        message_id: query.message.message_id,
+                        reply_markup: { inline_keyboard: [] }  // Empty keyboard to remove buttons
+                    }
+                );
+                
                 await ack('✅ Renewed!');
 
                 await bot.sendMessage(userChatId,
-                    `🎉 *Renewal Confirmed!*\n\n` +
+                    `🎉 Renewal Confirmed!\n\n` +
                     `Your subscription has been extended.\n\n` +
-                    `🔗 *Your Admin Link:*\n\`${link}\`\n\n` +
-                    `📅 Valid until: ${new Date(newExpiry).toLocaleDateString()}`,
-                    { parse_mode: 'Markdown' }
+                    `🔗 Your Admin Link:\n${link}\n\n` +
+                    `📅 Valid until: ${new Date(newExpiry).toLocaleDateString()}`
                 );
             } catch (err) {
-                await edit(`❌ Error: ${err.message}`);
+                console.error(`❌ Renewal error: ${err.message}`);
+                await bot.editMessageText(
+                    `❌ Error: ${err.message}`,
+                    {
+                        chat_id: chatId,
+                        message_id: query.message.message_id,
+                        reply_markup: { inline_keyboard: [] }
+                    }
+                );
                 await ack('Error', true);
             }
         } else if (action === 'rejectrenew') {
             pendingRenewals.delete(String(userChatId));
-            await edit(`❌ *Renewal Rejected*\n\n👤 Name: ${displayName}`);
+            
+            // Edit message to remove buttons and show renewal rejection
+            await bot.editMessageText(
+                `❌ Renewal Rejected\n\n👤 Name: ${displayName}`,
+                {
+                    chat_id: chatId,
+                    message_id: query.message.message_id,
+                    reply_markup: { inline_keyboard: [] }  // Empty keyboard to remove buttons
+                }
+            );
+            
             await ack('❌ Rejected');
 
             await bot.sendMessage(userChatId,
-                `❌ *Renewal Not Confirmed*\n\n` +
+                `❌ Renewal Not Confirmed\n\n` +
                 `We could not verify your renewal payment of KSh. ${RENEWAL_AMOUNT}.\n\n` +
                 `If you believe this is an error, contact the administrator.\n\n` +
-                `Send /start to try again.`,
-                { parse_mode: 'Markdown' }
+                `Send /start to try again.`
             );
         }
     }
