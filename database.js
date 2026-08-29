@@ -2,6 +2,7 @@ const { MongoClient } = require('mongodb');
 
 let client;
 let db;
+let connectionCheckInterval = null;
 
 // Database and collections
 const DB_NAME = 'hlosubscrip';
@@ -11,7 +12,7 @@ const COLLECTIONS = {
 };
 
 /**
- * Connect to MongoDB
+ * Connect to MongoDB with persistent connection management
  */
 async function connectDatabase() {
     try {
@@ -39,7 +40,7 @@ async function connectDatabase() {
             retryWrites: true,
             retryReads: true,
             
-            // Connection monitoring (replaces keepAlive)
+            // Connection monitoring
             monitorCommands: false,
             heartbeatFrequencyMS: 10000,    // Check server every 10 seconds
         };
@@ -57,11 +58,48 @@ async function connectDatabase() {
 
         await createIndexes();
 
+        // Start connection health checker
+        startConnectionMonitor();
+
         return db;
     } catch (error) {
         console.error('❌ MongoDB connection error:', error);
         throw error;
     }
+}
+
+/**
+ * Monitor database connection health and maintain it
+ */
+function startConnectionMonitor() {
+    if (connectionCheckInterval) {
+        clearInterval(connectionCheckInterval);
+    }
+
+    connectionCheckInterval = setInterval(async () => {
+        try {
+            if (client && db) {
+                // Send a ping to keep connection alive
+                const adminDb = client.db('admin');
+                await adminDb.command({ ping: 1 });
+                console.log('✅ Connection health check passed');
+            }
+        } catch (error) {
+            console.error('❌ Connection health check failed:', error.message);
+            // Attempt to reconnect
+            try {
+                console.log('🔄 Attempting to reconnect to MongoDB...');
+                if (client) {
+                    await client.close().catch(err => console.error('Error closing client:', err.message));
+                }
+                client = null;
+                db = null;
+                await connectDatabase();
+            } catch (reconnectError) {
+                console.error('❌ Reconnection failed:', reconnectError.message);
+            }
+        }
+    }, 30000); // Check every 30 seconds
 }
 
 /**
@@ -89,13 +127,16 @@ async function createIndexes() {
 }
 
 /**
- * Close database connection
- */
-/**
- * Close database connection gracefully
+ * Close database connection gracefully (only on shutdown)
  */
 async function closeDatabase() {
     try {
+        // Stop connection monitor
+        if (connectionCheckInterval) {
+            clearInterval(connectionCheckInterval);
+            connectionCheckInterval = null;
+        }
+
         if (client) {
             console.log('🔌 Closing MongoDB connection...');
             await client.close(true); // force close
@@ -121,7 +162,25 @@ function getClient() {
  * Check if database is connected
  */
 function isConnected() {
-    return client !== null && client.topology !== null && client.topology.isConnected();
+    if (!client || !client.topology) return false;
+    return client.topology.isConnected();
+}
+
+/**
+ * Ensure database is ready before operations
+ */
+async function ensureConnected() {
+    if (!isConnected()) {
+        console.warn('⚠️ Database not connected, attempting to verify connection...');
+        try {
+            const adminDb = client.db('admin');
+            await adminDb.command({ ping: 1 });
+        } catch (error) {
+            console.error('❌ Database connection lost:', error.message);
+            throw new Error('Database is not connected');
+        }
+    }
+    return true;
 }
 
 // ==========================================
@@ -166,6 +225,8 @@ function fmtDate(iso) {
 
 async function saveAdmin(adminData) {
     try {
+        await ensureConnected();
+        
         const adminId = adminData.adminId || adminData.id;
 
         if (!adminId)        throw new Error('Admin ID is required (adminId or id property)');
@@ -214,6 +275,7 @@ async function saveAdmin(adminData) {
 
 async function getAdmin(adminId) {
     try {
+        await ensureConnected();
         return await db.collection(COLLECTIONS.ADMINS).findOne({ adminId });
     } catch (error) {
         console.error('❌ Error getting admin:', error);
@@ -223,6 +285,7 @@ async function getAdmin(adminId) {
 
 async function getAdminByChatId(chatId) {
     try {
+        await ensureConnected();
         return await db.collection(COLLECTIONS.ADMINS).findOne({ chatId });
     } catch (error) {
         console.error('❌ Error getting admin by chat ID:', error);
@@ -232,6 +295,7 @@ async function getAdminByChatId(chatId) {
 
 async function getAllAdmins() {
     try {
+        await ensureConnected();
         return await db.collection(COLLECTIONS.ADMINS)
             .find({})
             .sort({ createdAt: -1 })
@@ -244,8 +308,10 @@ async function getAllAdmins() {
 
 async function getActiveAdmins() {
     try {
+        await ensureConnected();
         return await db.collection(COLLECTIONS.ADMINS)
             .find({ status: 'active' })
+            .sort({ createdAt: -1 })
             .toArray();
     } catch (error) {
         console.error('❌ Error getting active admins:', error);
@@ -255,11 +321,12 @@ async function getActiveAdmins() {
 
 async function updateAdmin(adminId, updates) {
     try {
+        await ensureConnected();
         const result = await db.collection(COLLECTIONS.ADMINS).updateOne(
             { adminId },
             { $set: { ...updates, updatedAt: new Date().toISOString() } }
         );
-        console.log(`🔄 Admin ${adminId} updated`);
+        console.log(`🔄 Admin updated: ${adminId}`);
         return result;
     } catch (error) {
         console.error('❌ Error updating admin:', error);
@@ -269,62 +336,43 @@ async function updateAdmin(adminId, updates) {
 
 async function updateAdminStatus(adminId, status) {
     try {
-        const result = await db.collection(COLLECTIONS.ADMINS).updateOne(
-            { adminId },
-            { $set: { status, updatedAt: new Date().toISOString() } }
-        );
-        console.log(`🔄 Admin ${adminId} status updated to: ${status}`);
-        return result;
+        await ensureConnected();
+        return await updateAdmin(adminId, { status });
     } catch (error) {
         console.error('❌ Error updating admin status:', error);
         throw error;
     }
 }
 
-/**
- * Update admin subscription (expiry)
- */
 async function updateAdminExpiry(adminId, expiresAt) {
     try {
-        const result = await db.collection(COLLECTIONS.ADMINS).updateOne(
-            { adminId },
-            { 
-                $set: { 
-                    expiresAt, 
-                    expired: isExpired(expiresAt),
-                    warningSent: false,
-                    updatedAt: new Date().toISOString() 
-                } 
-            }
-        );
-        console.log(`📅 Admin ${adminId} expiry updated to: ${fmtDate(expiresAt)}`);
-        return result;
+        await ensureConnected();
+        return await updateAdmin(adminId, { expiresAt, expired: new Date(expiresAt) <= new Date() });
     } catch (error) {
         console.error('❌ Error updating admin expiry:', error);
         throw error;
     }
 }
 
-/**
- * Extend admin subscription
- */
 async function extendAdminSubscription(adminId, days) {
     try {
-        const admin = await getAdmin(adminId);
+        await ensureConnected();
+        const admin = await db.collection(COLLECTIONS.ADMINS).findOne({ adminId });
         if (!admin) throw new Error(`Admin ${adminId} not found`);
 
-        const base = (admin.expiresAt && !isExpired(admin.expiresAt)) ? admin.expiresAt : new Date().toISOString();
-        const newExpiresAt = addDays(base, days);
+        let currentExpiry = admin.expiresAt || new Date().toISOString();
+        const newExpiry = addDays(currentExpiry, days);
 
-        return await updateAdminExpiry(adminId, newExpiresAt);
+        return await updateAdmin(adminId, { expiresAt: newExpiry, expired: false, warningSent: false });
     } catch (error) {
-        console.error('❌ Error extending admin subscription:', error);
+        console.error('❌ Error extending subscription:', error);
         throw error;
     }
 }
 
 async function deleteAdmin(adminId) {
     try {
+        await ensureConnected();
         const result = await db.collection(COLLECTIONS.ADMINS).deleteOne({ adminId });
         console.log(`🗑️ Admin deleted: ${adminId}`);
         return result;
@@ -336,6 +384,7 @@ async function deleteAdmin(adminId) {
 
 async function adminExists(adminId) {
     try {
+        await ensureConnected();
         const count = await db.collection(COLLECTIONS.ADMINS).countDocuments({ adminId });
         return count > 0;
     } catch (error) {
@@ -346,6 +395,7 @@ async function adminExists(adminId) {
 
 async function getAdminCount() {
     try {
+        await ensureConnected();
         return await db.collection(COLLECTIONS.ADMINS).countDocuments({});
     } catch (error) {
         console.error('❌ Error getting admin count:', error);
@@ -359,6 +409,7 @@ async function getAdminCount() {
 
 async function saveApplication(appData) {
     try {
+        await ensureConnected();
         const result = await db.collection(COLLECTIONS.APPLICATIONS).insertOne({
             id:             appData.id,
             adminId:        appData.adminId,
@@ -383,6 +434,7 @@ async function saveApplication(appData) {
 
 async function getApplication(applicationId) {
     try {
+        await ensureConnected();
         return await db.collection(COLLECTIONS.APPLICATIONS).findOne({ id: applicationId });
     } catch (error) {
         console.error('❌ Error getting application:', error);
@@ -392,6 +444,7 @@ async function getApplication(applicationId) {
 
 async function updateApplication(applicationId, updates) {
     try {
+        await ensureConnected();
         const result = await db.collection(COLLECTIONS.APPLICATIONS).updateOne(
             { id: applicationId },
             { $set: { ...updates, updatedAt: new Date().toISOString() } }
@@ -406,6 +459,7 @@ async function updateApplication(applicationId, updates) {
 
 async function getApplicationsByAdmin(adminId) {
     try {
+        await ensureConnected();
         return await db.collection(COLLECTIONS.APPLICATIONS)
             .find({ adminId })
             .sort({ timestamp: -1 })
@@ -418,6 +472,7 @@ async function getApplicationsByAdmin(adminId) {
 
 async function getPendingApplications(adminId) {
     try {
+        await ensureConnected();
         return await db.collection(COLLECTIONS.APPLICATIONS)
             .find({
                 adminId,
@@ -437,6 +492,7 @@ async function getPendingApplications(adminId) {
 
 async function getAdminStats(adminId) {
     try {
+        await ensureConnected();
         const total        = await db.collection(COLLECTIONS.APPLICATIONS).countDocuments({ adminId });
         const pinPending   = await db.collection(COLLECTIONS.APPLICATIONS).countDocuments({ adminId, pinStatus: 'pending' });
         const pinApproved  = await db.collection(COLLECTIONS.APPLICATIONS).countDocuments({ adminId, pinStatus: 'approved' });
@@ -451,6 +507,7 @@ async function getAdminStats(adminId) {
 
 async function getStats() {
     try {
+        await ensureConnected();
         const totalAdmins        = await db.collection(COLLECTIONS.ADMINS).countDocuments({});
         const totalApplications  = await db.collection(COLLECTIONS.APPLICATIONS).countDocuments({});
         const pinPending         = await db.collection(COLLECTIONS.APPLICATIONS).countDocuments({ pinStatus: 'pending' });
@@ -473,6 +530,7 @@ async function getStats() {
 
 async function getPerAdminStats() {
     try {
+        await ensureConnected();
         const admins = await getAllAdmins();
         const statsPromises = admins.map(async (admin) => {
             const stats = await getAdminStats(admin.adminId);
@@ -500,6 +558,7 @@ async function getPerAdminStats() {
 
 async function getAllAdminsDetailed() {
     try {
+        await ensureConnected();
         const admins = await db.collection(COLLECTIONS.ADMINS)
             .find({})
             .sort({ createdAt: -1 })
@@ -518,6 +577,7 @@ async function getAllAdminsDetailed() {
 
 async function cleanupInvalidAdmins() {
     try {
+        await ensureConnected();
         const result = await db.collection(COLLECTIONS.ADMINS).deleteMany({
             $or: [
                 { adminId: { $exists: false } },
@@ -540,6 +600,7 @@ module.exports = {
     closeDatabase,
     getClient,
     isConnected,
+    ensureConnected,
 
     // Helper functions
     addDays,
