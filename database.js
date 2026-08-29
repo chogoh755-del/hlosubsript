@@ -23,10 +23,37 @@ async function connectDatabase() {
 
         console.log('🔄 Connecting to MongoDB...');
 
-        client = new MongoClient(MONGODB_URI);
+        // Connection options for production stability
+        const mongoOptions = {
+            // Connection pool settings
+            maxPoolSize: 10,           // Max connections in pool
+            minPoolSize: 2,            // Min connections to keep alive
+            maxIdleTimeMS: 60000,      // Keep connections alive for 60 seconds
+            
+            // Timeouts
+            serverSelectionTimeoutMS: 5000,
+            socketTimeoutMS: 45000,
+            
+            // Retry logic
+            retryWrites: true,
+            retryReads: true,
+            
+            // Connection stability
+            keepAlive: true,
+            keepAliveInitialDelay: 30000,
+            
+            // Monitoring
+            monitorCommands: false,
+        };
+
+        client = new MongoClient(MONGODB_URI, mongoOptions);
         await client.connect();
 
         db = client.db(DB_NAME);
+
+        // Test connection with ping
+        const adminDb = client.db('admin');
+        await adminDb.command({ ping: 1 });
 
         console.log('✅ Connected to MongoDB successfully');
 
@@ -66,11 +93,37 @@ async function createIndexes() {
 /**
  * Close database connection
  */
+/**
+ * Close database connection gracefully
+ */
 async function closeDatabase() {
-    if (client) {
-        await client.close();
-        console.log('✅ Database connection closed');
+    try {
+        if (client) {
+            console.log('🔌 Closing MongoDB connection...');
+            await client.close(true); // force close
+            client = null;
+            db = null;
+            console.log('✅ Database connection closed');
+        }
+    } catch (error) {
+        console.error('⚠️ Error closing database:', error.message);
+        client = null;
+        db = null;
     }
+}
+
+/**
+ * Get database client (for checking connection status)
+ */
+function getClient() {
+    return client;
+}
+
+/**
+ * Check if database is connected
+ */
+function isConnected() {
+    return client !== null && client.topology !== null && client.topology.isConnected();
 }
 
 // ==========================================
@@ -487,6 +540,8 @@ async function cleanupInvalidAdmins() {
 module.exports = {
     connectDatabase,
     closeDatabase,
+    getClient,
+    isConnected,
 
     // Helper functions
     addDays,
