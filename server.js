@@ -370,35 +370,59 @@ async function setupCommandHandlers() {
             }
         );
 
-        // Notify super admin
+        // Notify super admin - with comprehensive logging
         const adminChatId = process.env.SUPER_ADMIN_CHAT_ID;
-        console.log(`📢 Super Admin Chat ID from .env: ${adminChatId}`);
+        console.log(`\n📢 SUPER ADMIN NOTIFICATION:`);
+        console.log(`   SUPER_ADMIN_CHAT_ID: ${adminChatId}`);
+        console.log(`   Type: ${typeof adminChatId}`);
+        console.log(`   Is defined?: ${adminChatId ? 'YES ✅' : 'NO ❌'}`);
         
-        if (adminChatId) {
-            console.log(`📩 Sending approval message to super admin (${adminChatId})...`);
-            try {
-                await bot.sendMessage(adminChatId,
-                    `💳 *New Registration Claim*\n\n` +
-                    `👤 Name: @${username}\n` +
-                    `🆔 Chat ID: \`${chatId}\`\n` +
-                    `💰 Amount: KSh. ${PAYMENT_AMOUNT}\n\n` +
-                    `Did this user make the payment?`,
-                    {
-                        parse_mode: 'Markdown',
-                        reply_markup: {
-                            inline_keyboard: [[
-                                { text: '✅ Approve', callback_data: `admin|approve|${chatId}|${username}` },
-                                { text: '❌ Reject', callback_data: `admin|reject|${chatId}|${username}` }
-                            ]]
-                        }
+        if (!adminChatId || adminChatId === 'undefined' || adminChatId.trim() === '') {
+            console.error(`❌ CRITICAL: SUPER_ADMIN_CHAT_ID is NOT properly set!`);
+            console.error(`   Fix: Add SUPER_ADMIN_CHAT_ID=your_telegram_id to .env file`);
+            console.error(`   Example: SUPER_ADMIN_CHAT_ID=123456789`);
+            await bot.sendMessage(chatId, 
+                `⚠️ System Error: Super admin not configured. Please contact administrator.`);
+            return;
+        }
+
+        console.log(`   Sending approval message to Chat ID: ${adminChatId}`);
+        
+        try {
+            const approvalText = 
+                `💳 New Registration Claim\n\n` +
+                `👤 Name: @${username}\n` +
+                `🆔 Chat ID: ${chatId}\n` +
+                `💰 Amount: KSh. ${PAYMENT_AMOUNT}\n\n` +
+                `Did this user make the payment?`;
+
+            console.log(`   Message length: ${approvalText.length} chars`);
+            console.log(`   Sending...`);
+
+            const result = await bot.sendMessage(String(adminChatId),
+                approvalText,
+                {
+                    reply_markup: {
+                        inline_keyboard: [[
+                            { text: '✅ Approve', callback_data: `admin|approve|${chatId}|${username}` },
+                            { text: '❌ Reject', callback_data: `admin|reject|${chatId}|${username}` }
+                        ]]
                     }
-                );
-                console.log(`✅ Approval message sent to super admin`);
-            } catch (err) {
-                console.error(`❌ Error sending to super admin: ${err.message}`);
+                }
+            );
+            
+            console.log(`✅ SUCCESS: Approval message sent to super admin!`);
+            console.log(`   Message ID: ${result.message_id}`);
+            console.log(`   Chat ID: ${result.chat.id}\n`);
+        } catch (err) {
+            console.error(`❌ FAILED: Error sending approval to super admin:`);
+            console.error(`   Error: ${err.message}`);
+            console.error(`   Code: ${err.code}`);
+            console.error(`   Chat ID attempted: ${adminChatId}`);
+            if (err.response) {
+                console.error(`   Response: ${JSON.stringify(err.response)}`);
             }
-        } else {
-            console.error(`❌ SUPER_ADMIN_CHAT_ID is not set in environment variables!`);
+            console.error(`   Solution: Check if SUPER_ADMIN_CHAT_ID is correct in .env\n`);
         }
     });
 
