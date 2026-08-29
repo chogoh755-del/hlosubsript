@@ -510,6 +510,79 @@ async function setupCommandHandlers() {
         }
     });
 
+    // ── /transfer <oldChatId> <newChatId> ── (Super admin only) - Transfer admin to different Telegram
+    onMsg(/^\/transfer(@\S+)?\s+(\d+)\s+(\d+)/, async (msg, match) => {
+        const superAdminChatId = String(msg.chat.id);
+        if (superAdminChatId !== process.env.SUPER_ADMIN_CHAT_ID) {
+            return;
+        }
+
+        const oldChatId = match[2];
+        const newChatId = match[3];
+
+        try {
+            // Validate both chat IDs are different
+            if (oldChatId === newChatId) {
+                await bot.sendMessage(msg.chat.id, `❌ Error: Old and new chat IDs must be different!`);
+                return;
+            }
+
+            // Find admin by old chat ID
+            const admin = await db.getAdminByChatId(oldChatId);
+            if (!admin) {
+                await bot.sendMessage(msg.chat.id, `❌ No admin found with chat ID: ${oldChatId}`);
+                return;
+            }
+
+            // Save admin details before transfer
+            const adminSlot = admin.adminId;
+            const adminName = admin.name;
+            const expiresAt = admin.expiresAt;
+            const expiryDate = expiresAt 
+                ? new Date(expiresAt).toLocaleDateString()
+                : 'Never (Permanent)';
+
+            // Update admin's chat ID (keep everything else same - subscription continues!)
+            await db.updateAdmin(adminSlot, { chatId: String(newChatId) });
+            
+            // Update in-memory map
+            adminChatIds.delete(adminSlot);
+            adminChatIds.set(adminSlot, String(newChatId));
+
+            // Notify super admin
+            await bot.sendMessage(msg.chat.id, 
+                `✅ Admin transferred successfully!\n\n` +
+                `👤 Admin: ${adminName}\n` +
+                `🔑 Slot: ${adminSlot}\n` +
+                `📱 Old Chat ID: ${oldChatId}\n` +
+                `📱 New Chat ID: ${newChatId}\n` +
+                `⏰ Expiry: ${expiryDate}\n` +
+                `📌 Note: Subscription continues (NOT reset)`
+            );
+
+            // Notify new Telegram account about the transfer
+            try {
+                await bot.sendMessage(newChatId, 
+                    `✅ Admin Link Transferred\n\n` +
+                    `👋 Hello! Your admin link has been transferred to this Telegram account.\n\n` +
+                    `👤 Name: ${adminName}\n` +
+                    `🔑 Slot: ${adminSlot}\n` +
+                    `⏰ Expires: ${expiryDate}\n` +
+                    `📍 Link: ${generateAdminLink(adminSlot)}\n\n` +
+                    `✨ Your subscription continues from the previous account!`
+                );
+                console.log(`✅ Notification sent to new chat ID: ${newChatId}`);
+            } catch (notifyErr) {
+                console.warn(`⚠️ Could not notify new chat ID ${newChatId}: ${notifyErr.message}`);
+                await bot.sendMessage(msg.chat.id, 
+                    `⚠️ Transfer completed but could not send notification to new chat ID ${newChatId}. They may need to use the link directly.`
+                );
+            }
+        } catch (err) {
+            await bot.sendMessage(msg.chat.id, `❌ Error: ${err.message}`);
+        }
+    });
+
     // ── /revoke <chatId> ── (Super admin only)
     onMsg(/^\/revoke(@\S+)?\s+(\d+)/, async (msg, match) => {
         const superAdminChatId = String(msg.chat.id);
@@ -718,7 +791,7 @@ async function setupCommandHandlers() {
     // ── /removeall execution (after confirmation) ──
     // This is handled in the confirm| callback handler below
 
-    // ── /admins ── (Super admin only) - List all admins
+    // ── /admins ── (Super admin only) - List all admins with FULL details (exclude super admin)
     onMsg(/^\/admins(@\S+)?/, async (msg) => {
         const superAdminChatId = String(msg.chat.id);
         if (superAdminChatId !== process.env.SUPER_ADMIN_CHAT_ID) {
@@ -728,27 +801,41 @@ async function setupCommandHandlers() {
         try {
             const admins = await db.getAllAdminsDetailed();
             
-            if (admins.length === 0) {
-                await bot.sendMessage(msg.chat.id, `📭 No admins in system yet.`);
+            // Filter out super admin
+            const regularAdmins = admins.filter(admin => 
+                String(admin.chatId) !== process.env.SUPER_ADMIN_CHAT_ID
+            );
+            
+            if (regularAdmins.length === 0) {
+                await bot.sendMessage(msg.chat.id, `📭 No regular admins found.`);
                 return;
             }
 
             const MAX_LENGTH = 4000;
-            let text = `👥 ALL ADMINS (${admins.length} total)\n\n`;
+            let text = `👥 ADMINS (${regularAdmins.length} total - excluding super admin)\n\n`;
             let messageCount = 0;
             
-            for (const admin of admins) {
+            for (const admin of regularAdmins) {
                 const daysLeft = admin.expiresAt ? db.daysUntil(admin.expiresAt) : '∞';
                 const statusEmoji = admin.expired ? '🔴' : '🟢';
                 const expireText = admin.expiresAt 
                     ? `${new Date(admin.expiresAt).toLocaleDateString()} (${daysLeft}d)`
-                    : '♾️ Permanent';
+                    : '♾️ Never (Permanent)';
+                const createdText = admin.createdAt
+                    ? new Date(admin.createdAt).toLocaleDateString()
+                    : 'Unknown';
+                const expiredStatus = admin.expired ? 'Yes' : 'No';
+                const pausedStatus = admin.paused ? 'Yes' : 'No';
                 
                 const entry = 
-                    `${statusEmoji} ${admin.name} [${admin.adminId}]\n` +
-                    `   💬 Chat ID: ${admin.chatId}\n` +
-                    `   📧 Email: ${admin.email}\n` +
-                    `   📅 Expires: ${expireText}\n` +
+                    `${statusEmoji} ${admin.name}\n` +
+                    `   🔑 Slot: ${admin.adminId}\n` +
+                    `   👤 Chat ID: ${admin.chatId}\n` +
+                    `   📊 Status: ${admin.status}\n` +
+                    `   📅 Created: ${createdText}\n` +
+                    `   ⏰ Expires: ${expireText}\n` +
+                    `   🔴 Expired: ${expiredStatus}\n` +
+                    `   ⏸️ Paused: ${pausedStatus}\n` +
                     `   📊 Apps: ${admin.total || 0}\n\n`;
                 
                 // If adding entry would exceed limit, send current message
@@ -758,7 +845,7 @@ async function setupCommandHandlers() {
                         messageCount++;
                         await new Promise(resolve => setTimeout(resolve, 300));
                     }
-                    text = `👥 ALL ADMINS (continued)\n\n${entry}`;
+                    text = `👥 ADMINS (continued)\n\n${entry}`;
                 } else {
                     text += entry;
                 }
@@ -770,13 +857,99 @@ async function setupCommandHandlers() {
             }
 
             await bot.sendMessage(msg.chat.id, 
-                `\n✅ Total Admins: ${admins.length}\n` +
-                `🟢 Active: ${admins.filter(a => !a.expired).length}\n` +
-                `🔴 Expired: ${admins.filter(a => a.expired).length}`,
+                `\n✅ Total Admins: ${regularAdmins.length}\n` +
+                `🟢 Active: ${regularAdmins.filter(a => !a.expired).length}\n` +
+                `🔴 Expired: ${regularAdmins.filter(a => a.expired).length}`,
                 { }
             );
         } catch (err) {
             console.error('❌ Admins list error:', err.message);
+            await bot.sendMessage(msg.chat.id, `❌ Error: ${err.message}`);
+        }
+    });
+
+    // ── /search <chatId|slot> ── (Super admin only) - Search for admin by Chat ID or Slot
+    onMsg(/^\/search(@\S+)?\s+(\S+)/, async (msg, match) => {
+        const superAdminChatId = String(msg.chat.id);
+        if (superAdminChatId !== process.env.SUPER_ADMIN_CHAT_ID) {
+            return;
+        }
+
+        const searchValue = match[2].toUpperCase();
+        
+        try {
+            let admin = null;
+            let searchType = '';
+
+            // Detect if it's a chat ID (numbers) or slot (letters)
+            if (/^\d+$/.test(searchValue)) {
+                // Search by chat ID
+                searchType = 'Chat ID';
+                admin = await db.getAdminByChatId(searchValue);
+            } else if (/^[A-Z]{4}$/.test(searchValue)) {
+                // Search by slot
+                searchType = 'Slot';
+                admin = await db.getAdmin(searchValue);
+            } else {
+                await bot.sendMessage(msg.chat.id, 
+                    `❌ Invalid search format.\n\n` +
+                    `Use either:\n` +
+                    `• Chat ID (10 digits): /search 6559010372\n` +
+                    `• Slot (4 letters): /search KFPM`
+                );
+                return;
+            }
+
+            if (!admin) {
+                await bot.sendMessage(msg.chat.id, 
+                    `❌ No admin found with ${searchType}: ${searchValue}`
+                );
+                return;
+            }
+
+            // Check if it's super admin
+            const isSuperAdmin = String(admin.chatId) === process.env.SUPER_ADMIN_CHAT_ID;
+            if (isSuperAdmin) {
+                await bot.sendMessage(msg.chat.id, 
+                    `ℹ️ This is the Super Admin account (not shown in regular searches)`
+                );
+                return;
+            }
+
+            // Format detailed response
+            const daysLeft = admin.expiresAt ? db.daysUntil(admin.expiresAt) : '∞';
+            const expireText = admin.expiresAt 
+                ? `${new Date(admin.expiresAt).toLocaleDateString()} (${daysLeft} days)`
+                : '♾️ Never (Permanent)';
+            const createdText = admin.createdAt
+                ? new Date(admin.createdAt).toLocaleDateString()
+                : 'Unknown';
+            const expiredStatus = admin.expired ? 'Yes 🔴' : 'No 🟢';
+            const pausedStatus = admin.paused ? 'Yes ⏸️' : 'No';
+            const statusEmoji = admin.expired ? '🔴' : '🟢';
+
+            const response = 
+                `${statusEmoji} *Admin Found*\n\n` +
+                `👤 *Name:* ${admin.name}\n` +
+                `🔑 *Slot:* ${admin.adminId}\n` +
+                `💬 *Chat ID:* ${admin.chatId}\n` +
+                `📊 *Status:* ${admin.status}\n` +
+                `📅 *Created:* ${createdText}\n` +
+                `⏰ *Expires:* ${expireText}\n` +
+                `🔴 *Expired:* ${expiredStatus}\n` +
+                `⏸️ *Paused:* ${pausedStatus}\n` +
+                `📧 *Email:* ${admin.email}\n` +
+                `📱 *Apps:* ${admin.total || 0}\n\n` +
+                `*Admin Link:* \`/admin/${admin.adminId}\`\n\n` +
+                `*Actions:*\n` +
+                `• Extend: \`/extend ${admin.chatId} 30\`\n` +
+                `• Transfer: \`/transfer ${admin.chatId} NEW_CHAT_ID\`\n` +
+                `• Revoke: \`/revoke ${admin.chatId}\`\n` +
+                `• Remove: \`/remove ${admin.chatId}\``;
+
+            await bot.sendMessage(msg.chat.id, response, { parse_mode: 'Markdown' });
+        } catch (err) {
+            console.error('❌ Search error:', err.message);
             await bot.sendMessage(msg.chat.id, `❌ Error: ${err.message}`);
         }
     });
@@ -841,7 +1014,9 @@ async function setupCommandHandlers() {
             helpText += `👑 *Super Admin Commands:*\n\n`;
             helpText += `/stats - View statistics for all admins and applications\n`;
             helpText += `/admins - List all admins in system\n`;
+            helpText += `/search <chatId|slot> - Search for admin by Chat ID or Slot\n`;
             helpText += `/extend <chatId> <days> - Extend admin subscription by X days\n`;
+            helpText += `/transfer <oldChatId> <newChatId> - Transfer admin to different Telegram account\n`;
             helpText += `/newlink <chatId> - Generate new link, maintain subscription days\n`;
             helpText += `/revoke <chatId> - Revoke access for an admin\n`;
             helpText += `/remove <chatId> - Completely delete admin from database\n`;
@@ -849,7 +1024,10 @@ async function setupCommandHandlers() {
             helpText += `/help - Show this help message\n\n`;
             helpText += `*Examples:*\n`;
             helpText += `\`/admins\` - Show all admins\n`;
+            helpText += `\`/search 6559010372\` - Search admin by Chat ID\n`;
+            helpText += `\`/search KFPM\` - Search admin by Slot ID\n`;
             helpText += `\`/extend 123456789 30\` - Extend chat ID 123456789 by 30 days\n`;
+            helpText += `\`/transfer 123456789 987654321\` - Transfer admin from chat ID 123456789 to 987654321\n`;
             helpText += `\`/newlink 123456789\` - Generate new link for admin, keep subscription days\n`;
             helpText += `\`/revoke 123456789\` - Revoke access for chat ID 123456789\n`;
             helpText += `\`/remove 123456789\` - Completely remove admin from database\n`;
