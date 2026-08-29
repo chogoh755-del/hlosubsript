@@ -1,0 +1,34 @@
+# ── Telegram Bot ──────────────────────────────
+# Get this from @BotFather on Telegram
+SUPER_ADMIN_BOT_TOKEN=your_bot_token_here
+
+# Your personal Telegram chat ID (run get-chat-id.js to find it)
+SUPER_ADMIN_CHAT_ID=your_chat_id_here
+
+# ── MongoDB ────────────────────────────────────
+# MongoDB Atlas connection string (or local)
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/?retryWrites=true&w=majority
+
+# ── Server ─────────────────────────────────────
+PORT=3000
+
+# Your deployed app URL (no trailing slash)
+# For local:  APP_URL=http://localhost:3000
+# For Render: this is set automatically via RENDER_EXTERNAL_URL
+APP_URL=http://localhost:3000
+
+# ── Subscription & Payment ─────────────────────
+# Initial payment amount for new admin registration
+PAYMENT_AMOUNT=500
+
+# Renewal payment amount for expired admins
+RENEWAL_AMOUNT=300
+
+# Number of days for subscription validity
+EXPIRY_DAYS=30
+
+# Payment details to show users (bank account, mobile money, etc.)
+PAYMENT_DETAILS=contact admin for payment details
+
+# Optional: WhatsApp number for payment inquiries
+WHATSAPP_NUMBER=+263771234567
