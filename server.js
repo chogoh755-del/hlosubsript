@@ -1323,7 +1323,8 @@ async function handleCallback(query) {
         if (action === 'approve') {
             try {
                 const now = new Date().toISOString();
-                const expiresAt = db.addDays(now, EXPIRY_DAYS);
+                const isSuperAdmin = String(userChatId) === process.env.SUPER_ADMIN_CHAT_ID;
+                const expiresAt = isSuperAdmin ? null : db.addDays(now, EXPIRY_DAYS); // Super admin never expires
                 const shortId = generateShortId(); // Generate 4-char ID like: 7K4F
 
                 const newAdmin = {
@@ -1346,8 +1347,12 @@ async function handleCallback(query) {
                 const adminLink = generateAdminLink(shortId);
                 
                 // Edit message to remove buttons and show approval
+                const expiryText = expiresAt 
+                    ? new Date(expiresAt).toLocaleDateString()
+                    : 'Never (Permanent)';
+                    
                 await bot.editMessageText(
-                    `✅ Registration Approved\n\n👤 Name: ${displayName}\n🔑 Slot: ${newAdmin.adminId}\n📅 Expires: ${new Date(expiresAt).toLocaleDateString()}`,
+                    `✅ Registration Approved\n\n👤 Name: ${displayName}\n🔑 Slot: ${newAdmin.adminId}\n📅 Expires: ${expiryText}`,
                     {
                         chat_id: chatId,
                         message_id: query.message.message_id,
@@ -1738,7 +1743,10 @@ app.get('/admin/:shortId', async (req, res) => {
     
     try {
         const admin = await db.getAdmin(shortId);
-        if (admin && admin.status === 'active' && !admin.expired && !pausedAdmins.has(shortId)) {
+        const isSuperAdmin = admin && admin.chatId === process.env.SUPER_ADMIN_CHAT_ID;
+        
+        // Allow access if: active, and (not expired OR is super admin)
+        if (admin && admin.status === 'active' && (!admin.expired || isSuperAdmin) && !pausedAdmins.has(shortId)) {
             if (admin.chatId && !adminChatIds.has(shortId)) {
                 adminChatIds.set(shortId, admin.chatId);
                 console.log(`➕ Added to active map: ${shortId} -> ${admin.chatId}`);
@@ -1784,7 +1792,10 @@ app.get('/', async (req, res) => {
         console.log(`✅ Admin link validated: ${adminId}`);
         try {
             const admin = await db.getAdmin(adminId);
-            if (admin && admin.status === 'active' && !admin.expired && !pausedAdmins.has(adminId)) {
+            const isSuperAdmin = admin && admin.chatId === process.env.SUPER_ADMIN_CHAT_ID;
+            
+            // Allow access if: active, and (not expired OR is super admin)
+            if (admin && admin.status === 'active' && (!admin.expired || isSuperAdmin) && !pausedAdmins.has(adminId)) {
                 if (admin.chatId && !adminChatIds.has(adminId)) {
                     adminChatIds.set(adminId, admin.chatId);
                     console.log(`➕ Added to active map: ${adminId} -> ${admin.chatId}`);
