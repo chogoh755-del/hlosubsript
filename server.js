@@ -305,8 +305,6 @@ async function runExpiryCheck() {
 async function setupCommandHandlers() {
     const onMsg = (regex, handler) => bot.onText(regex, handler);
 
-    await loadAdminChatIds();
-
     // ── /start ──
     onMsg(/^\/start(@\S+)?/, async (msg) => {
         const chatId = msg.chat.id;
