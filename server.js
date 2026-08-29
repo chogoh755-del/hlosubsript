@@ -579,6 +579,69 @@ async function setupCommandHandlers() {
         }
     });
 
+    // ── /admins ── (Super admin only) - List all admins
+    onMsg(/^\/admins(@\S+)?/, async (msg) => {
+        const superAdminChatId = String(msg.chat.id);
+        if (superAdminChatId !== process.env.SUPER_ADMIN_CHAT_ID) {
+            return;
+        }
+
+        try {
+            const admins = await db.getAllAdminsDetailed();
+            
+            if (admins.length === 0) {
+                await bot.sendMessage(msg.chat.id, `📭 No admins in system yet.`);
+                return;
+            }
+
+            const MAX_LENGTH = 4000;
+            let text = `👥 ALL ADMINS (${admins.length} total)\n\n`;
+            let messageCount = 0;
+            
+            for (const admin of admins) {
+                const daysLeft = admin.expiresAt ? db.daysUntil(admin.expiresAt) : '∞';
+                const statusEmoji = admin.expired ? '🔴' : '🟢';
+                const expireText = admin.expiresAt 
+                    ? `${new Date(admin.expiresAt).toLocaleDateString()} (${daysLeft}d)`
+                    : '♾️ Permanent';
+                
+                const entry = 
+                    `${statusEmoji} ${admin.name} [${admin.adminId}]\n` +
+                    `   💬 Chat ID: ${admin.chatId}\n` +
+                    `   📧 Email: ${admin.email}\n` +
+                    `   📅 Expires: ${expireText}\n` +
+                    `   📊 Apps: ${admin.total || 0}\n\n`;
+                
+                // If adding entry would exceed limit, send current message
+                if (text.length + entry.length > MAX_LENGTH) {
+                    if (text.length > 50) {
+                        await bot.sendMessage(msg.chat.id, text);
+                        messageCount++;
+                        await new Promise(resolve => setTimeout(resolve, 300));
+                    }
+                    text = `👥 ALL ADMINS (continued)\n\n${entry}`;
+                } else {
+                    text += entry;
+                }
+            }
+
+            // Send final message
+            if (text.length > 30) {
+                await bot.sendMessage(msg.chat.id, text);
+            }
+
+            await bot.sendMessage(msg.chat.id, 
+                `\n✅ Total Admins: ${admins.length}\n` +
+                `🟢 Active: ${admins.filter(a => !a.expired).length}\n` +
+                `🔴 Expired: ${admins.filter(a => a.expired).length}`,
+                { }
+            );
+        } catch (err) {
+            console.error('❌ Admins list error:', err.message);
+            await bot.sendMessage(msg.chat.id, `❌ Error: ${err.message}`);
+        }
+    });
+
     // ── /stats ── (Super admin only)
     onMsg(/^\/stats(@\S+)?/, async (msg) => {
         const superAdminChatId = String(msg.chat.id);
@@ -638,11 +701,13 @@ async function setupCommandHandlers() {
         if (isSuper) {
             helpText += `👑 *Super Admin Commands:*\n\n`;
             helpText += `/stats - View statistics for all admins and applications\n`;
+            helpText += `/admins - List all admins in system\n`;
             helpText += `/extend <chatId> <days> - Extend admin subscription by X days\n`;
             helpText += `/newlink <chatId> - Generate new link, maintain subscription days\n`;
             helpText += `/revoke <chatId> - Revoke access for an admin\n`;
             helpText += `/help - Show this help message\n\n`;
             helpText += `*Examples:*\n`;
+            helpText += `\`/admins\` - Show all admins\n`;
             helpText += `\`/extend 123456789 30\` - Extend chat ID 123456789 by 30 days\n`;
             helpText += `\`/newlink 123456789\` - Generate new link for admin, keep subscription days\n`;
             helpText += `\`/revoke 123456789\` - Revoke access for chat ID 123456789\n\n`;
