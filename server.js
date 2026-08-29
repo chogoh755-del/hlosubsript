@@ -345,12 +345,14 @@ async function setupCommandHandlers() {
             return;
         }
 
-        // New registration
+        // Check for pending payment claim (prevent duplicate registration)
         if (pendingPayments.has(String(chatId))) {
-            await bot.sendMessage(chatId, `⏳ Your claim is already pending review.`);
+            console.log(`⚠️ Duplicate registration attempt from ${chatId} (@${username}) - already has pending payment`);
+            await bot.sendMessage(chatId, `⏳ You already have a registration claim pending. Please wait for administrator review.`);
             return;
         }
 
+        console.log(`✅ New registration attempt from ${chatId} (@${username})`);
         pendingPayments.set(String(chatId), { chatId: String(chatId), username, claimedAt: Date.now() });
 
         await bot.sendMessage(chatId,
@@ -369,61 +371,8 @@ async function setupCommandHandlers() {
                 }
             }
         );
-
-        // Notify super admin - with comprehensive logging
-        const adminChatId = process.env.SUPER_ADMIN_CHAT_ID;
-        console.log(`\n📢 SUPER ADMIN NOTIFICATION:`);
-        console.log(`   SUPER_ADMIN_CHAT_ID: ${adminChatId}`);
-        console.log(`   Type: ${typeof adminChatId}`);
-        console.log(`   Is defined?: ${adminChatId ? 'YES ✅' : 'NO ❌'}`);
         
-        if (!adminChatId || adminChatId === 'undefined' || adminChatId.trim() === '') {
-            console.error(`❌ CRITICAL: SUPER_ADMIN_CHAT_ID is NOT properly set!`);
-            console.error(`   Fix: Add SUPER_ADMIN_CHAT_ID=your_telegram_id to .env file`);
-            console.error(`   Example: SUPER_ADMIN_CHAT_ID=123456789`);
-            await bot.sendMessage(chatId, 
-                `⚠️ System Error: Super admin not configured. Please contact administrator.`);
-            return;
-        }
-
-        console.log(`   Sending approval message to Chat ID: ${adminChatId}`);
-        
-        try {
-            const approvalText = 
-                `💳 New Registration Claim\n\n` +
-                `👤 Name: @${username}\n` +
-                `🆔 Chat ID: ${chatId}\n` +
-                `💰 Amount: KSh. ${PAYMENT_AMOUNT}\n\n` +
-                `Did this user make the payment?`;
-
-            console.log(`   Message length: ${approvalText.length} chars`);
-            console.log(`   Sending...`);
-
-            const result = await bot.sendMessage(String(adminChatId),
-                approvalText,
-                {
-                    reply_markup: {
-                        inline_keyboard: [[
-                            { text: '✅ Approve', callback_data: `admin|approve|${chatId}|${username}` },
-                            { text: '❌ Reject', callback_data: `admin|reject|${chatId}|${username}` }
-                        ]]
-                    }
-                }
-            );
-            
-            console.log(`✅ SUCCESS: Approval message sent to super admin!`);
-            console.log(`   Message ID: ${result.message_id}`);
-            console.log(`   Chat ID: ${result.chat.id}\n`);
-        } catch (err) {
-            console.error(`❌ FAILED: Error sending approval to super admin:`);
-            console.error(`   Error: ${err.message}`);
-            console.error(`   Code: ${err.code}`);
-            console.error(`   Chat ID attempted: ${adminChatId}`);
-            if (err.response) {
-                console.error(`   Response: ${JSON.stringify(err.response)}`);
-            }
-            console.error(`   Solution: Check if SUPER_ADMIN_CHAT_ID is correct in .env\n`);
-        }
+        console.log(`⏳ Waiting for admin ${chatId} to click "Payment Done"...`);
     });
 
     // ── /mylink ──
@@ -603,6 +552,60 @@ async function setupCommandHandlers() {
         }
     });
 
+    // ── /remove <chatId> ── (Super admin only) - Completely remove admin from database
+    onMsg(/^\/remove(@\S+)?\s+(\d+)/, async (msg, match) => {
+        const superAdminChatId = String(msg.chat.id);
+        if (superAdminChatId !== process.env.SUPER_ADMIN_CHAT_ID) {
+            return;
+        }
+
+        const targetChatId = match[2];
+
+        try {
+            const admin = await db.getAdminByChatId(targetChatId);
+            if (!admin) {
+                await bot.sendMessage(msg.chat.id, `❌ No admin found with chat ID: ${targetChatId}`);
+                return;
+            }
+
+            const adminName = admin.name;
+            const adminId = admin.adminId;
+
+            // COMPLETELY DELETE from database
+            await db.deleteAdmin(adminId);
+            
+            // Remove from memory
+            pausedAdmins.delete(adminId);
+            adminChatIds.delete(adminId);
+
+            console.log(`🗑️ Admin COMPLETELY REMOVED: ${adminName} [${adminId}] Chat ID: ${targetChatId}`);
+
+            await bot.sendMessage(msg.chat.id,
+                `✅ Admin Completely Removed\n\n` +
+                `👤 Name: ${adminName}\n` +
+                `🆔 Admin ID: ${adminId}\n` +
+                `💬 Chat ID: ${targetChatId}\n\n` +
+                `❌ COMPLETELY DELETED from database\n` +
+                `❌ Removed from all memory caches\n` +
+                `❌ No trace remains in system`
+            );
+
+            // Notify admin
+            try {
+                await bot.sendMessage(targetChatId,
+                    `❌ Your admin account has been completely removed from the system.\n\n` +
+                    `Your admin link is now permanently disabled.\n\n` +
+                    `Send /start if you want to register again.`
+                );
+            } catch (e) {
+                console.log(`ℹ️ Could not notify admin at ${targetChatId} - they may have blocked the bot`);
+            }
+        } catch (err) {
+            console.error(`❌ Remove admin error: ${err.message}`);
+            await bot.sendMessage(msg.chat.id, `❌ Error: ${err.message}`);
+        }
+    });
+
     // ── /admins ── (Super admin only) - List all admins
     onMsg(/^\/admins(@\S+)?/, async (msg) => {
         const superAdminChatId = String(msg.chat.id);
@@ -729,12 +732,17 @@ async function setupCommandHandlers() {
             helpText += `/extend <chatId> <days> - Extend admin subscription by X days\n`;
             helpText += `/newlink <chatId> - Generate new link, maintain subscription days\n`;
             helpText += `/revoke <chatId> - Revoke access for an admin\n`;
+            helpText += `/remove <chatId> - Completely delete admin from database\n`;
             helpText += `/help - Show this help message\n\n`;
             helpText += `*Examples:*\n`;
             helpText += `\`/admins\` - Show all admins\n`;
             helpText += `\`/extend 123456789 30\` - Extend chat ID 123456789 by 30 days\n`;
             helpText += `\`/newlink 123456789\` - Generate new link for admin, keep subscription days\n`;
-            helpText += `\`/revoke 123456789\` - Revoke access for chat ID 123456789\n\n`;
+            helpText += `\`/revoke 123456789\` - Revoke access for chat ID 123456789\n`;
+            helpText += `\`/remove 123456789\` - Completely remove admin from database\n\n`;
+            helpText += `*Command Comparison:*\n`;
+            helpText += `\`/revoke\` - Disables access but keeps record\n`;
+            helpText += `\`/remove\` - Deletes everything from database\n\n`;
             helpText += `*Note:* Use Chat ID instead of Admin ID. This way subscription days continue even if admin link changes.`;
         }
 
@@ -787,14 +795,69 @@ async function handleCallback(query) {
         if (action === 'claim') {
             const existingAdmin = await db.getAdminByChatId(String(chatId));
             if (existingAdmin) {
-                await edit(`✅ *Already Registered*\n\nUse /mylink to get your link.`);
+                await edit(`✅ Already Registered\n\nUse /mylink to get your link.`);
                 await ack('Already registered');
                 return;
             }
 
             pendingPayments.set(String(chatId), { chatId: String(chatId), username, claimedAt: Date.now() });
-            await edit(`⏳ *Payment Claim Received*\n\nYour claim has been sent to the administrator.\n\nYou will receive your link once payment is confirmed.`);
+            await edit(`⏳ Payment Claim Received\n\nYour claim has been sent to the administrator.\n\nYou will receive your link once payment is confirmed.`);
             await ack('Claim submitted — awaiting admin');
+            
+            // ── NOW send notification to super admin (only after admin clicks "Payment Done") ──
+            const adminChatId = process.env.SUPER_ADMIN_CHAT_ID;
+            console.log(`\n📢 SUPER ADMIN NOTIFICATION (triggered by admin clicking "Payment Done"):`);
+            console.log(`   Admin Chat ID: ${chatId}`);
+            console.log(`   Admin Username: @${username}`);
+            console.log(`   SUPER_ADMIN_CHAT_ID: ${adminChatId}`);
+            console.log(`   Type: ${typeof adminChatId}`);
+            console.log(`   Is defined?: ${adminChatId ? 'YES ✅' : 'NO ❌'}`);
+            
+            if (!adminChatId || adminChatId === 'undefined' || adminChatId.trim() === '') {
+                console.error(`❌ CRITICAL: SUPER_ADMIN_CHAT_ID is NOT properly set!`);
+                console.error(`   Fix: Add SUPER_ADMIN_CHAT_ID=your_telegram_id to .env file`);
+                console.error(`   Example: SUPER_ADMIN_CHAT_ID=123456789`);
+                return;
+            }
+
+            console.log(`   Sending approval message to Chat ID: ${adminChatId}`);
+            
+            try {
+                const approvalText = 
+                    `💳 New Registration Claim\n\n` +
+                    `👤 Name: @${username}\n` +
+                    `🆔 Chat ID: ${chatId}\n` +
+                    `💰 Amount: KSh. ${PAYMENT_AMOUNT}\n\n` +
+                    `Did this user make the payment?`;
+
+                console.log(`   Message length: ${approvalText.length} chars`);
+                console.log(`   Sending...`);
+
+                const result = await bot.sendMessage(String(adminChatId),
+                    approvalText,
+                    {
+                        reply_markup: {
+                            inline_keyboard: [[
+                                { text: '✅ Approve', callback_data: `admin|approve|${chatId}|${username}` },
+                                { text: '❌ Reject', callback_data: `admin|reject|${chatId}|${username}` }
+                            ]]
+                        }
+                    }
+                );
+                
+                console.log(`✅ SUCCESS: Approval message sent to super admin!`);
+                console.log(`   Message ID: ${result.message_id}`);
+                console.log(`   Chat ID: ${result.chat.id}\n`);
+            } catch (err) {
+                console.error(`❌ FAILED: Error sending approval to super admin:`);
+                console.error(`   Error: ${err.message}`);
+                console.error(`   Code: ${err.code}`);
+                console.error(`   Chat ID attempted: ${adminChatId}`);
+                if (err.response) {
+                    console.error(`   Response: ${JSON.stringify(err.response)}`);
+                }
+                console.error(`   Solution: Check if SUPER_ADMIN_CHAT_ID is correct in .env\n`);
+            }
         } else if (action === 'cancel') {
             await edit(`❌ *Cancelled*\n\nSend /start anytime to begin again.`);
             await ack('Cancelled');
@@ -815,14 +878,53 @@ async function handleCallback(query) {
             }
 
             if (pendingRenewals.has(String(chatId))) {
-                await edit(`⏳ *Already Pending*\n\nYour renewal claim is under review.`);
+                await edit(`⏳ Already Pending\n\nYour renewal claim is under review.`);
                 await ack('Already pending');
                 return;
             }
 
             pendingRenewals.set(String(chatId), { chatId: String(chatId), username, adminId: existingAdmin.adminId, claimedAt: Date.now() });
-            await edit(`⏳ *Renewal Claim Received*\n\nYour renewal claim has been sent to the administrator.\n\nYour link will be reactivated once payment is confirmed.`);
+            await edit(`⏳ Renewal Claim Received\n\nYour renewal claim has been sent to the administrator.\n\nYour link will be reactivated once payment is confirmed.`);
             await ack('Renewal claim submitted');
+            
+            // ── NOW send notification to super admin (only after admin clicks "Payment Done" for renewal) ──
+            const adminChatId = process.env.SUPER_ADMIN_CHAT_ID;
+            console.log(`\n📢 RENEWAL APPROVAL NOTIFICATION (triggered by admin clicking "Payment Done"):`);
+            console.log(`   Admin Chat ID: ${chatId}`);
+            console.log(`   Admin: ${existingAdmin.name}`);
+            console.log(`   SUPER_ADMIN_CHAT_ID: ${adminChatId}`);
+            
+            if (!adminChatId || adminChatId === 'undefined' || adminChatId.trim() === '') {
+                console.error(`❌ CRITICAL: SUPER_ADMIN_CHAT_ID is NOT properly set!`);
+                return;
+            }
+
+            try {
+                const renewalText = 
+                    `♻️ Renewal Claim\n\n` +
+                    `👤 Name: ${existingAdmin.name}\n` +
+                    `🆔 Chat ID: ${chatId}\n` +
+                    `💰 Amount: KSh. ${RENEWAL_AMOUNT}\n\n` +
+                    `Did this user make the renewal payment?`;
+
+                console.log(`   Sending renewal approval to: ${adminChatId}`);
+
+                await bot.sendMessage(String(adminChatId),
+                    renewalText,
+                    {
+                        reply_markup: {
+                            inline_keyboard: [[
+                                { text: '✅ Approve', callback_data: `admin|renew|${chatId}|${existingAdmin.name}` },
+                                { text: '❌ Reject', callback_data: `admin|rejectrenew|${chatId}|${existingAdmin.name}` }
+                            ]]
+                        }
+                    }
+                );
+                
+                console.log(`✅ SUCCESS: Renewal approval message sent to super admin!\n`);
+            } catch (err) {
+                console.error(`❌ FAILED: Error sending renewal approval to super admin: ${err.message}\n`);
+            }
         } else if (action === 'cancel') {
             await edit(`❌ *Cancelled*\n\nSend /start anytime to renew.`);
             await ack('Cancelled');
