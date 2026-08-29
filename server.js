@@ -488,11 +488,22 @@ async function setupCommandHandlers() {
                 return;
             }
 
+            // Check if super admin (permanent)
+            if (admin.expiresAt === null) {
+                await bot.sendMessage(msg.chat.id, 
+                    `ℹ️ Admin ${admin.name} [Chat ID: ${targetChatId}] is a Super Admin with PERMANENT access (Never expires).`
+                );
+                return;
+            }
+
             await db.extendAdminSubscription(admin.adminId, days);
             const updatedAdmin = await db.getAdmin(admin.adminId);
+            const expiryDate = updatedAdmin.expiresAt 
+                ? new Date(updatedAdmin.expiresAt).toLocaleDateString() 
+                : 'Never (Permanent)';
+            
             await bot.sendMessage(msg.chat.id,
-                `✅ Extended ${updatedAdmin.name} [Chat ID: ${targetChatId}] by ${days} days.\n📅 New expiry: ${new Date(updatedAdmin.expiresAt).toLocaleDateString()}`,
-                { parse_mode: 'Markdown' }
+                `✅ Extended ${updatedAdmin.name} [Chat ID: ${targetChatId}] by ${days} days.\n📅 New expiry: ${expiryDate}`
             );
         } catch (err) {
             await bot.sendMessage(msg.chat.id, `❌ Error: ${err.message}`);
