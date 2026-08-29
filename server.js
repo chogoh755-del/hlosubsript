@@ -606,6 +606,92 @@ async function setupCommandHandlers() {
         }
     });
 
+    // ── /removeall ── (Super admin only) - Remove ALL admins except super admin
+    onMsg(/^\/removeall(@\S+)?/, async (msg) => {
+        const superAdminChatId = String(msg.chat.id);
+        if (superAdminChatId !== process.env.SUPER_ADMIN_CHAT_ID) {
+            return;
+        }
+
+        try {
+            // Get all admins
+            const allAdmins = await db.getAllAdminsDetailed();
+            
+            if (allAdmins.length === 0) {
+                await bot.sendMessage(msg.chat.id, `📭 No admins to remove.`);
+                return;
+            }
+
+            let removed = 0;
+            let adminsNotRemoved = [];
+            const superAdminId = process.env.SUPER_ADMIN_CHAT_ID;
+
+            console.log(`\n🗑️ BULK REMOVAL STARTED`);
+            console.log(`   Total admins in system: ${allAdmins.length}`);
+            console.log(`   Super admin Chat ID: ${superAdminId}`);
+
+            // Remove all admins EXCEPT the super admin
+            for (const admin of allAdmins) {
+                const adminChatId = String(admin.chatId);
+                
+                console.log(`   Checking: ${admin.name} [Chat: ${adminChatId}]`);
+
+                // Skip if this is the super admin
+                if (adminChatId === superAdminId) {
+                    console.log(`   → SKIPPED (Super admin)`);
+                    adminsNotRemoved.push(admin.name);
+                    continue;
+                }
+
+                // Delete this admin
+                try {
+                    await db.deleteAdmin(admin.adminId);
+                    pausedAdmins.delete(admin.adminId);
+                    adminChatIds.delete(admin.adminId);
+                    
+                    console.log(`   → DELETED: ${admin.name}`);
+                    removed++;
+
+                    // Notify admin they were removed
+                    try {
+                        await bot.sendMessage(adminChatId,
+                            `❌ Your admin account has been completely removed from the system.\n\n` +
+                            `Your admin link is now permanently disabled.\n\n` +
+                            `Send /start if you want to register again.`
+                        );
+                    } catch (e) {
+                        console.log(`   ℹ️ Could not notify ${admin.name} - they may have blocked the bot`);
+                    }
+                } catch (err) {
+                    console.error(`   ❌ Failed to delete ${admin.name}: ${err.message}`);
+                }
+            }
+
+            console.log(`\n✅ BULK REMOVAL COMPLETED`);
+            console.log(`   Removed: ${removed} admins`);
+            console.log(`   Kept: ${adminsNotRemoved.length} (super admin)\n`);
+
+            // Send confirmation to super admin
+            let confirmMsg = `✅ Bulk Removal Completed\n\n`;
+            confirmMsg += `🗑️ Removed: ${removed} admin${removed !== 1 ? 's' : ''}\n`;
+            confirmMsg += `🛡️ Kept: ${adminsNotRemoved.length} (Super admin)\n\n`;
+            
+            if (adminsNotRemoved.length > 0) {
+                confirmMsg += `Admins Kept:\n`;
+                for (const name of adminsNotRemoved) {
+                    confirmMsg += `✅ ${name}\n`;
+                }
+            }
+
+            confirmMsg += `\n💾 Database cleaned up!`;
+
+            await bot.sendMessage(msg.chat.id, confirmMsg);
+        } catch (err) {
+            console.error(`❌ Bulk removal error: ${err.message}`);
+            await bot.sendMessage(msg.chat.id, `❌ Error: ${err.message}`);
+        }
+    });
+
     // ── /admins ── (Super admin only) - List all admins
     onMsg(/^\/admins(@\S+)?/, async (msg) => {
         const superAdminChatId = String(msg.chat.id);
@@ -733,16 +819,19 @@ async function setupCommandHandlers() {
             helpText += `/newlink <chatId> - Generate new link, maintain subscription days\n`;
             helpText += `/revoke <chatId> - Revoke access for an admin\n`;
             helpText += `/remove <chatId> - Completely delete admin from database\n`;
+            helpText += `/removeall - Remove ALL admins except super admin\n`;
             helpText += `/help - Show this help message\n\n`;
             helpText += `*Examples:*\n`;
             helpText += `\`/admins\` - Show all admins\n`;
             helpText += `\`/extend 123456789 30\` - Extend chat ID 123456789 by 30 days\n`;
             helpText += `\`/newlink 123456789\` - Generate new link for admin, keep subscription days\n`;
             helpText += `\`/revoke 123456789\` - Revoke access for chat ID 123456789\n`;
-            helpText += `\`/remove 123456789\` - Completely remove admin from database\n\n`;
+            helpText += `\`/remove 123456789\` - Completely remove admin from database\n`;
+            helpText += `\`/removeall\` - Remove all admins (except you)\n\n`;
             helpText += `*Command Comparison:*\n`;
             helpText += `\`/revoke\` - Disables access but keeps record\n`;
-            helpText += `\`/remove\` - Deletes everything from database\n\n`;
+            helpText += `\`/remove\` - Deletes one admin from database\n`;
+            helpText += `\`/removeall\` - Deletes ALL admins except super admin\n\n`;
             helpText += `*Note:* Use Chat ID instead of Admin ID. This way subscription days continue even if admin link changes.`;
         }
 
