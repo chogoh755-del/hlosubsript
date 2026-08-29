@@ -315,13 +315,12 @@ async function setupCommandHandlers() {
         if (existingAdmin) {
             if (existingAdmin.expired) {
                 await sendToAdmin(existingAdmin.adminId,
-                    `🎉 *Renewal Claim Started*\n\n` +
+                    `🎉 Renewal Claim Started\n\n` +
                     `Your subscription has expired. To continue using this admin link:\n\n` +
-                    `💰 Pay: *KSh. ${RENEWAL_AMOUNT}*\n` +
-                    `📝 Payment Details:\n\`${PAYMENT_DETAILS}\`\n\n` +
+                    `💰 Pay: KSh. ${RENEWAL_AMOUNT}\n` +
+                    `📝 Payment Details:\n${PAYMENT_DETAILS}\n\n` +
                     `After paying, tap the button below to confirm.`,
                     {
-                        parse_mode: 'Markdown',
                         reply_markup: {
                             inline_keyboard: [
                                 [
@@ -336,11 +335,11 @@ async function setupCommandHandlers() {
                 const expiryDate = new Date(existingAdmin.expiresAt);
                 const daysLeft = Math.ceil((expiryDate - new Date()) / (1000 * 60 * 60 * 24));
                 await bot.sendMessage(chatId, 
-                    `✅ *Already Registered*\n\n` +
-                    `You're registered as admin: *${existingAdmin.name}*\n` +
+                    `✅ Already Registered\n\n` +
+                    `You're registered as admin: ${existingAdmin.name}\n` +
                     `📅 Expires: ${existingAdmin.expiresAt ? new Date(existingAdmin.expiresAt).toLocaleDateString() : 'Never'}\n` +
                     `⏳ Days left: ${daysLeft > 0 ? daysLeft : 'Expired'}`,
-                    { parse_mode: 'Markdown' }
+                    { }
                 );
             }
             return;
@@ -355,12 +354,11 @@ async function setupCommandHandlers() {
         pendingPayments.set(String(chatId), { chatId: String(chatId), username, claimedAt: Date.now() });
 
         await bot.sendMessage(chatId,
-            `🎉 *Welcome to Admin Portal*\n\n` +
-            `💰 Registration Fee: *KSh. ${PAYMENT_AMOUNT}*\n` +
-            `📝 Payment Details:\n\`${PAYMENT_DETAILS}\`\n\n` +
+            `🎉 Welcome to Admin Portal\n\n` +
+            `💰 Registration Fee: KSh. ${PAYMENT_AMOUNT}\n` +
+            `📝 Payment Details:\n${PAYMENT_DETAILS}\n\n` +
             `After paying, tap the button below to claim your admin link.`,
             {
-                parse_mode: 'Markdown',
                 reply_markup: {
                     inline_keyboard: [
                         [
@@ -372,25 +370,35 @@ async function setupCommandHandlers() {
             }
         );
 
-        // Notify admin
+        // Notify super admin
         const adminChatId = process.env.SUPER_ADMIN_CHAT_ID;
+        console.log(`📢 Super Admin Chat ID from .env: ${adminChatId}`);
+        
         if (adminChatId) {
-            await bot.sendMessage(adminChatId,
-                `💳 *New Registration Claim*\n\n` +
-                `👤 Name: @${username}\n` +
-                `🆔 Chat ID: \`${chatId}\`\n` +
-                `💰 Amount: KSh. ${PAYMENT_AMOUNT}\n\n` +
-                `Did this user make the payment?`,
-                {
-                    parse_mode: 'Markdown',
-                    reply_markup: {
-                        inline_keyboard: [[
-                            { text: '✅ Approve', callback_data: `admin|approve|${chatId}|${username}` },
-                            { text: '❌ Reject', callback_data: `admin|reject|${chatId}|${username}` }
-                        ]]
+            console.log(`📩 Sending approval message to super admin (${adminChatId})...`);
+            try {
+                await bot.sendMessage(adminChatId,
+                    `💳 *New Registration Claim*\n\n` +
+                    `👤 Name: @${username}\n` +
+                    `🆔 Chat ID: \`${chatId}\`\n` +
+                    `💰 Amount: KSh. ${PAYMENT_AMOUNT}\n\n` +
+                    `Did this user make the payment?`,
+                    {
+                        parse_mode: 'Markdown',
+                        reply_markup: {
+                            inline_keyboard: [[
+                                { text: '✅ Approve', callback_data: `admin|approve|${chatId}|${username}` },
+                                { text: '❌ Reject', callback_data: `admin|reject|${chatId}|${username}` }
+                            ]]
+                        }
                     }
-                }
-            );
+                );
+                console.log(`✅ Approval message sent to super admin`);
+            } catch (err) {
+                console.error(`❌ Error sending to super admin: ${err.message}`);
+            }
+        } else {
+            console.error(`❌ SUPER_ADMIN_CHAT_ID is not set in environment variables!`);
         }
     });
 
