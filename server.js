@@ -48,38 +48,39 @@ let server = null; // For proper graceful shutdown
 // ==========================================
 
 /**
- * Convert number to Base62 (0-9, a-z, A-Z) and pad to 4 chars
- * Uses: 0-9 (10) + a-z (26) + A-Z (26) = 62 total chars
- * 4 chars = 62^4 = 14.7 million possible IDs
+ * Convert number to Base52 (a-z, A-Z only - no numbers!)
+ * Uses: a-z (26) + A-Z (26) = 52 total chars
+ * 4 chars = 52^4 = 7.3 million possible IDs
+ * Example: KFPM, XYZW, ABCD
  */
 function generateShortId(timestamp = Date.now()) {
-    const chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
     let num = timestamp;
     let result = '';
     
     while (num > 0) {
-        result = chars[num % 62] + result;
-        num = Math.floor(num / 62);
+        result = chars[num % 52] + result;
+        num = Math.floor(num / 52);
     }
     
     // Pad to 4 characters minimum
     while (result.length < 4) {
-        result = '0' + result;
+        result = 'a' + result;
     }
     
     // Return first 4 characters
-    return result.substring(0, 4);
+    return result.substring(0, 4).toUpperCase(); // Make uppercase for cleaner look
 }
 
 /**
- * Reverse: Convert Base62 back to timestamp (for optional validation)
+ * Reverse: Convert Base52 back to timestamp (for optional validation)
  */
 function decodeShortId(shortId) {
-    const chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
     let num = 0;
     
     for (let i = 0; i < shortId.length; i++) {
-        num = num * 62 + chars.indexOf(shortId[i]);
+        num = num * 52 + chars.indexOf(shortId[i].toLowerCase());
     }
     
     return num;
