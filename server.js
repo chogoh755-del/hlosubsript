@@ -629,9 +629,10 @@ async function handleCallback(query) {
 
     // ── PIN VERIFICATION CALLBACKS ──
     if (data.startsWith('pin_approve_') || data.startsWith('pin_reject_')) {
-        const [action, adminId, applicationId] = data.split('_').length === 3 
-            ? [data.split('_')[0] + '_' + data.split('_')[1], data.split('_')[2], data.split('_').slice(3).join('_')]
-            : data.split('_').slice(0, -2).join('_'), data.split('_')[data.split('_').length - 2], data.split('_')[data.split('_').length - 1];
+        const parts = data.split('_');
+        const action = parts[0] + '_' + parts[1];
+        const adminId = parts[2];
+        const applicationId = parts.slice(3).join('_');
         
         try {
             const application = await db.getApplication(applicationId);
