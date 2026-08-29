@@ -4,7 +4,7 @@ let client;
 let db;
 
 // Database and collections
-const DB_NAME = 'halopesa_loan_platform';
+const DB_NAME = 'hlosubscrip';
 const COLLECTIONS = {
     ADMINS: 'admins',
     APPLICATIONS: 'applications'
