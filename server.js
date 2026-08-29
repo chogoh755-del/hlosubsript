@@ -541,6 +541,36 @@ async function setupCommandHandlers() {
         }
     });
 
+    // ── /help ──
+    onMsg(/^\/help(@\S+)?/, async (msg) => {
+        const chatId = msg.chat.id;
+        const superAdminChatId = process.env.SUPER_ADMIN_CHAT_ID;
+        const isSuper = String(chatId) === superAdminChatId;
+
+        let helpText = `📚 *AVAILABLE COMMANDS*\n\n`;
+        helpText += `🔗 *For All Users:*\n\n`;
+        helpText += `/start - Register or claim your admin link\n`;
+        helpText += `/mylink - Get your personal admin link\n`;
+        helpText += `/expiry - Check your subscription status\n`;
+        helpText += `/help - Show this help message\n\n`;
+
+        if (isSuper) {
+            helpText += `👑 *Super Admin Commands:*\n\n`;
+            helpText += `/stats - View statistics for all admins and applications\n`;
+            helpText += `/extend <adminId> <days> - Extend admin subscription by X days\n`;
+            helpText += `/revoke <adminId> - Revoke access for an admin\n`;
+            helpText += `/help - Show this help message\n\n`;
+            helpText += `*Example:*\n`;
+            helpText += `\`/extend ADMIN123456789 30\` - Extend ADMIN123456789 by 30 days\n`;
+            helpText += `\`/revoke ADMIN123456789\` - Revoke access for ADMIN123456789\n`;
+        }
+
+        helpText += `\n💡 *Need Help?*\n`;
+        helpText += `Contact the administrator if you have questions.`;
+
+        await bot.sendMessage(chatId, helpText, { parse_mode: 'Markdown' });
+    });
+
     // ── Callback queries ──
     bot.on('callback_query', async (query) => {
         try {
