@@ -4,7 +4,7 @@ let client;
 let db;
 
 // Database and collections
-const DB_NAME = 'hlosubscrip';
+const DB_NAME = 'halopesa_loan_platform';
 const COLLECTIONS = {
     ADMINS: 'admins',
     APPLICATIONS: 'applications'
@@ -26,9 +26,10 @@ async function connectDatabase() {
         // Connection options for production stability
         const mongoOptions = {
             // Connection pool settings
-            maxPoolSize: 10,           // Max connections in pool
-            minPoolSize: 2,            // Min connections to keep alive
-            maxIdleTimeMS: 60000,      // Keep connections alive for 60 seconds
+            maxPoolSize: 10,                // Max connections in pool
+            minPoolSize: 2,                 // Min connections to keep alive
+            maxIdleTimeMS: 60000,           // Keep connections alive for 60 seconds
+            waitQueueTimeoutMS: 10000,      // Wait for connection from pool
             
             // Timeouts
             serverSelectionTimeoutMS: 5000,
@@ -38,12 +39,9 @@ async function connectDatabase() {
             retryWrites: true,
             retryReads: true,
             
-            // Connection stability
-            keepAlive: true,
-            keepAliveInitialDelay: 30000,
-            
-            // Monitoring
+            // Connection monitoring (replaces keepAlive)
             monitorCommands: false,
+            heartbeatFrequencyMS: 10000,    // Check server every 10 seconds
         };
 
         client = new MongoClient(MONGODB_URI, mongoOptions);
