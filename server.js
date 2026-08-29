@@ -15,26 +15,9 @@ const BOT_TOKEN   = process.env.SUPER_ADMIN_BOT_TOKEN;
 const PORT        = process.env.PORT || 10000;
 const WEBHOOK_URL = process.env.RENDER_EXTERNAL_URL || process.env.APP_URL || `http://localhost:${PORT}`;
 
-// Auto-extract domain from WEBHOOK_URL
-function extractDomain(url) {
-    try {
-        const urlObj = new URL(url);
-        return urlObj.hostname; // Returns just the domain without protocol
-    } catch (e) {
-        return 'localhost';
-    }
-}
-
-const BASE_DOMAIN = extractDomain(WEBHOOK_URL);
-
-// Generate subdomain link automatically
-function generateSubdomainLink(shortId) {
-    // Automatically creates: http://7K4F.your-actual-domain.com
-    return `http://${shortId}.${BASE_DOMAIN}`;
-}
-
-// Generate path-based link automatically
-function generatePathLink(shortId) {
+// Generate path-based link (Simple & Works Immediately!)
+function generateAdminLink(shortId) {
+    // Returns: http://yoursite.com/admin/7K4F
     return `${WEBHOOK_URL}/admin/${shortId}`;
 }
 
@@ -446,14 +429,12 @@ async function setupCommandHandlers() {
             return;
         }
 
-        // Generate links automatically from domain
-        const subdomainLink = generateSubdomainLink(admin.adminId);
-        const pathLink = generatePathLink(admin.adminId);
+        // Generate simple path-based link
+        const adminLink = generateAdminLink(admin.adminId);
         
         await bot.sendMessage(chatId,
             `🔗 Your Admin Link\n\n` +
-            `📍 Primary:\n${subdomainLink}\n\n` +
-            `💡 Short & memorable - perfect for social media!\n\n` +
+            `${adminLink}\n\n` +
             `📅 Expires: ${admin.expiresAt ? new Date(admin.expiresAt).toLocaleDateString() : 'Never'}`
         );
     });
@@ -568,8 +549,7 @@ async function setupCommandHandlers() {
 
             // Keep the old admin's details but generate new short ID
             const newAdminId = generateShortId(); // Generate 4-char ID like: 7K4F
-            const subdomainLink = generateSubdomainLink(newAdminId);
-            const pathLink = generatePathLink(newAdminId);
+            const adminLink = generateAdminLink(newAdminId);
 
             // Create new admin record with same Chat ID and expiry date
             const newAdmin = {
@@ -607,13 +587,13 @@ async function setupCommandHandlers() {
             await bot.sendMessage(targetChatId,
                 `🔄 New Admin Link Generated\n\n` +
                 `Your subscription details are maintained!\n\n` +
-                `🔗 New Link:\n${subdomainLink}\n\n` +
+                `🔗 New Link:\n${adminLink}\n\n` +
                 `📅 Still Expires: ${new Date(oldAdmin.expiresAt).toLocaleDateString()}\n` +
                 `⏰ Days Left: ${db.daysUntil(oldAdmin.expiresAt)}\n\n` +
                 `Your old link has been completely removed from the system.`
             );
         } catch (err) {
-            await bot.sendMessage(msg.chat.io, `❌ Error: ${err.message}`);
+            await bot.sendMessage(msg.chat.id, `❌ Error: ${err.message}`);
         }
     });
 
@@ -1354,9 +1334,8 @@ async function handleCallback(query) {
                 adminChatIds.set(newAdmin.adminId, String(userChatId));
                 pendingPayments.delete(String(userChatId));
 
-                // Generate links automatically from domain
-                const subdomainLink = generateSubdomainLink(shortId);
-                const pathLink = generatePathLink(shortId);
+                // Generate simple path-based link
+                const adminLink = generateAdminLink(shortId);
                 
                 // Edit message to remove buttons and show approval
                 await bot.editMessageText(
@@ -1370,13 +1349,12 @@ async function handleCallback(query) {
                 
                 await ack('✅ Approved!');
 
-                // Send link to admin with both formats
+                // Send link to admin
                 await bot.sendMessage(userChatId,
                     `🎉 Payment Confirmed!\n\n` +
                     `Your admin account has been activated.\n\n` +
-                    `🔗 Your Admin Link:\n${subdomainLink}\n\n` +
+                    `🔗 Your Admin Link:\n${adminLink}\n\n` +
                     `📅 Valid until: ${new Date(expiresAt).toLocaleDateString()}\n\n` +
-                    `💡 Tip: Share this link on social media - it's short & memorable!\n\n` +
                     `Send /mylink to get this link again.`
                 );
             } catch (err) {
