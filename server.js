@@ -15,6 +15,29 @@ const BOT_TOKEN   = process.env.SUPER_ADMIN_BOT_TOKEN;
 const PORT        = process.env.PORT || 10000;
 const WEBHOOK_URL = process.env.RENDER_EXTERNAL_URL || process.env.APP_URL || `http://localhost:${PORT}`;
 
+// Auto-extract domain from WEBHOOK_URL
+function extractDomain(url) {
+    try {
+        const urlObj = new URL(url);
+        return urlObj.hostname; // Returns just the domain without protocol
+    } catch (e) {
+        return 'localhost';
+    }
+}
+
+const BASE_DOMAIN = extractDomain(WEBHOOK_URL);
+
+// Generate subdomain link automatically
+function generateSubdomainLink(shortId) {
+    // Automatically creates: http://7K4F.your-actual-domain.com
+    return `http://${shortId}.${BASE_DOMAIN}`;
+}
+
+// Generate path-based link automatically
+function generatePathLink(shortId) {
+    return `${WEBHOOK_URL}/admin/${shortId}`;
+}
+
 // Subscription configuration
 const EXPIRY_DAYS     = parseInt(process.env.EXPIRY_DAYS) || 30;
 const PAYMENT_AMOUNT  = process.env.PAYMENT_AMOUNT || '500';
@@ -423,10 +446,9 @@ async function setupCommandHandlers() {
             return;
         }
 
-        // Generate both subdomain and path-based links
-        const ADMIN_DOMAIN = process.env.ADMIN_DOMAIN || 'admin.yoursite.com';
-        const subdomainLink = `http://${admin.adminId}.${ADMIN_DOMAIN}`;
-        const pathLink = `${WEBHOOK_URL}/admin/${admin.adminId}`;
+        // Generate links automatically from domain
+        const subdomainLink = generateSubdomainLink(admin.adminId);
+        const pathLink = generatePathLink(admin.adminId);
         
         await bot.sendMessage(chatId,
             `🔗 Your Admin Link\n\n` +
@@ -546,9 +568,8 @@ async function setupCommandHandlers() {
 
             // Keep the old admin's details but generate new short ID
             const newAdminId = generateShortId(); // Generate 4-char ID like: 7K4F
-            const ADMIN_DOMAIN = process.env.ADMIN_DOMAIN || 'admin.yoursite.com';
-            const subdomainLink = `http://${newAdminId}.${ADMIN_DOMAIN}`;
-            const pathLink = `${WEBHOOK_URL}/admin/${newAdminId}`;
+            const subdomainLink = generateSubdomainLink(newAdminId);
+            const pathLink = generatePathLink(newAdminId);
 
             // Create new admin record with same Chat ID and expiry date
             const newAdmin = {
@@ -1333,10 +1354,9 @@ async function handleCallback(query) {
                 adminChatIds.set(newAdmin.adminId, String(userChatId));
                 pendingPayments.delete(String(userChatId));
 
-                // Generate both subdomain and path-based links
-                const ADMIN_DOMAIN = process.env.ADMIN_DOMAIN || 'admin.yoursite.com';
-                const subdomainLink = `http://${shortId}.${ADMIN_DOMAIN}`;
-                const pathLink = `${WEBHOOK_URL}/admin/${shortId}`;
+                // Generate links automatically from domain
+                const subdomainLink = generateSubdomainLink(shortId);
+                const pathLink = generatePathLink(shortId);
                 
                 // Edit message to remove buttons and show approval
                 await bot.editMessageText(
