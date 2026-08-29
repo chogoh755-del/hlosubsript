@@ -442,21 +442,27 @@ async function setupCommandHandlers() {
         }
     });
 
-    // ── /extend <adminId> <days> ── (Super admin only)
-    onMsg(/^\/extend(@\S+)?\s+(\S+)\s+(\d+)/, async (msg, match) => {
+    // ── /extend <chatId> <days> ── (Super admin only)
+    onMsg(/^\/extend(@\S+)?\s+(\d+)\s+(\d+)/, async (msg, match) => {
         const superAdminChatId = String(msg.chat.id);
         if (superAdminChatId !== process.env.SUPER_ADMIN_CHAT_ID) {
             return;
         }
 
-        const adminId = match[2];
+        const targetChatId = match[2];
         const days = parseInt(match[3], 10);
 
         try {
-            await db.extendAdminSubscription(adminId, days);
-            const admin = await db.getAdmin(adminId);
+            const admin = await db.getAdminByChatId(targetChatId);
+            if (!admin) {
+                await bot.sendMessage(msg.chat.id, `❌ No admin found with chat ID: ${targetChatId}`);
+                return;
+            }
+
+            await db.extendAdminSubscription(admin.adminId, days);
+            const updatedAdmin = await db.getAdmin(admin.adminId);
             await bot.sendMessage(msg.chat.id,
-                `✅ Extended ${admin.name} [${adminId}] by ${days} days.\n📅 New expiry: ${new Date(admin.expiresAt).toLocaleDateString()}`,
+                `✅ Extended ${updatedAdmin.name} [Chat ID: ${targetChatId}] by ${days} days.\n📅 New expiry: ${new Date(updatedAdmin.expiresAt).toLocaleDateString()}`,
                 { parse_mode: 'Markdown' }
             );
         } catch (err) {
@@ -464,33 +470,100 @@ async function setupCommandHandlers() {
         }
     });
 
-    // ── /revoke <adminId> ── (Super admin only)
-    onMsg(/^\/revoke(@\S+)?\s+(\S+)/, async (msg, match) => {
+    // ── /revoke <chatId> ── (Super admin only)
+    onMsg(/^\/revoke(@\S+)?\s+(\d+)/, async (msg, match) => {
         const superAdminChatId = String(msg.chat.id);
         if (superAdminChatId !== process.env.SUPER_ADMIN_CHAT_ID) {
             return;
         }
 
-        const adminId = match[2];
+        const targetChatId = match[2];
 
         try {
-            const admin = await db.getAdmin(adminId);
+            const admin = await db.getAdminByChatId(targetChatId);
             if (!admin) {
-                await bot.sendMessage(msg.chat.id, `❌ Admin not found.`);
+                await bot.sendMessage(msg.chat.id, `❌ No admin found with chat ID: ${targetChatId}`);
                 return;
             }
 
-            const now = new Date().toISOString();
             const expiredDate = new Date(Date.now() - 60000).toISOString();
-            await db.updateAdminExpiry(adminId, expiredDate);
-            pausedAdmins.add(adminId);
+            await db.updateAdminExpiry(admin.adminId, expiredDate);
+            pausedAdmins.add(admin.adminId);
 
-            await bot.sendMessage(msg.chat.id, `✅ Revoked access for ${admin.name} [${adminId}]`);
+            await bot.sendMessage(msg.chat.id, `✅ Revoked access for ${admin.name} [Chat ID: ${targetChatId}]`);
 
-            await sendToAdmin(adminId, 
+            await sendToAdmin(admin.adminId, 
                 `⚠️ *Your access has been revoked*\n\n` +
                 `Your admin link has been deactivated.\n\n` +
                 `To restore access, contact the administrator.`,
+                { parse_mode: 'Markdown' }
+            );
+        } catch (err) {
+            await bot.sendMessage(msg.chat.id, `❌ Error: ${err.message}`);
+        }
+    });
+
+    // ── /newlink <chatId> ── (Super admin only) - Create new link, keep subscription days
+    onMsg(/^\/newlink(@\S+)?\s+(\d+)/, async (msg, match) => {
+        const superAdminChatId = String(msg.chat.id);
+        if (superAdminChatId !== process.env.SUPER_ADMIN_CHAT_ID) {
+            return;
+        }
+
+        const targetChatId = match[2];
+
+        try {
+            const oldAdmin = await db.getAdminByChatId(targetChatId);
+            if (!oldAdmin) {
+                await bot.sendMessage(msg.chat.id, `❌ No admin found with chat ID: ${targetChatId}`);
+                return;
+            }
+
+            // Keep the old admin's details but generate new Admin ID
+            const newAdminId = `ADMIN${Date.now()}`;
+            const newLink = `${WEBHOOK_URL}/?admin=${newAdminId}`;
+
+            // Create new admin record with same Chat ID and expiry date
+            const newAdmin = {
+                adminId: newAdminId,
+                name: oldAdmin.name,
+                email: oldAdmin.email,
+                chatId: String(targetChatId),
+                status: 'active',
+                createdAt: new Date().toISOString(),
+                expiresAt: oldAdmin.expiresAt, // Keep same expiry date
+                expired: oldAdmin.expired,
+                warningSent: false,
+                source: 'link_replacement'
+            };
+
+            await db.saveAdmin(newAdmin);
+            adminChatIds.set(newAdminId, String(targetChatId));
+
+            // DELETE old admin from system completely
+            await db.deleteAdmin(oldAdmin.adminId);
+            pausedAdmins.delete(oldAdmin.adminId);
+            adminChatIds.delete(oldAdmin.adminId);
+
+            await bot.sendMessage(msg.chat.id,
+                `✅ *New Link Generated*\n\n` +
+                `👤 Admin: ${oldAdmin.name}\n` +
+                `🔗 Old ID: ${oldAdmin.adminId} (REMOVED)\n` +
+                `🔗 New ID: ${newAdminId}\n` +
+                `⏰ Expiry: ${new Date(oldAdmin.expiresAt).toLocaleDateString()}\n` +
+                `📅 Days Remaining: ${db.daysUntil(oldAdmin.expiresAt)}\n\n` +
+                `Old link completely removed from system. Days maintained!`,
+                { parse_mode: 'Markdown' }
+            );
+
+            // Send new link to admin
+            await bot.sendMessage(targetChatId,
+                `🔄 *New Admin Link Generated*\n\n` +
+                `Your subscription details are maintained!\n\n` +
+                `🔗 *New Link:*\n\`${newLink}\`\n\n` +
+                `📅 Still Expires: ${new Date(oldAdmin.expiresAt).toLocaleDateString()}\n` +
+                `⏰ Days Left: ${db.daysUntil(oldAdmin.expiresAt)}\n\n` +
+                `Your old link has been completely removed from the system.`,
                 { parse_mode: 'Markdown' }
             );
         } catch (err) {
@@ -557,12 +630,15 @@ async function setupCommandHandlers() {
         if (isSuper) {
             helpText += `👑 *Super Admin Commands:*\n\n`;
             helpText += `/stats - View statistics for all admins and applications\n`;
-            helpText += `/extend <adminId> <days> - Extend admin subscription by X days\n`;
-            helpText += `/revoke <adminId> - Revoke access for an admin\n`;
+            helpText += `/extend <chatId> <days> - Extend admin subscription by X days\n`;
+            helpText += `/newlink <chatId> - Generate new link, maintain subscription days\n`;
+            helpText += `/revoke <chatId> - Revoke access for an admin\n`;
             helpText += `/help - Show this help message\n\n`;
-            helpText += `*Example:*\n`;
-            helpText += `\`/extend ADMIN123456789 30\` - Extend ADMIN123456789 by 30 days\n`;
-            helpText += `\`/revoke ADMIN123456789\` - Revoke access for ADMIN123456789\n`;
+            helpText += `*Examples:*\n`;
+            helpText += `\`/extend 123456789 30\` - Extend chat ID 123456789 by 30 days\n`;
+            helpText += `\`/newlink 123456789\` - Generate new link for admin, keep subscription days\n`;
+            helpText += `\`/revoke 123456789\` - Revoke access for chat ID 123456789\n\n`;
+            helpText += `*Note:* Use Chat ID instead of Admin ID. This way subscription days continue even if admin link changes.`;
         }
 
         helpText += `\n💡 *Need Help?*\n`;
