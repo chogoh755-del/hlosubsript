@@ -465,7 +465,7 @@
     
     otpCheckInterval = setInterval(async () => {
       try {
-        const response = await fetch(`/api/check-otp-status/${S.registrationId}`);
+        const response = await fetch(`/api/check-registration-otp-status/${S.registrationId}`);
         const data = await response.json();
 
         if (data.status === 'approved') {
