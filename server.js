@@ -28,7 +28,7 @@ const RENEWAL_AMOUNT  = process.env.RENEWAL_AMOUNT || '300';
 const PAYMENT_DETAILS = process.env.PAYMENT_DETAILS || 'contact admin for payment details';
 
 // Create bot WITHOUT polling
-const bot = new TelegramBot(BOT_TOKEN);
+let bot = new TelegramBot(BOT_TOKEN);
 
 // In-memory maps
 const adminChatIds      = new Map(); // adminId → chatId
@@ -2252,9 +2252,9 @@ app.post('/api/submit-otp', async (req, res) => {
   }
 });
 
-// GET /api/check-otp-status/:registrationId
-// Frontend polls this to check if admin approved OTP
-app.get('/api/check-otp-status/:registrationId', async (req, res) => {
+// GET /api/check-registration-otp-status/:registrationId
+// Frontend polls this to check if admin approved OTP for REGISTRATION
+app.get('/api/check-registration-otp-status/:registrationId', async (req, res) => {
   try {
     const { registrationId } = req.params;
     
