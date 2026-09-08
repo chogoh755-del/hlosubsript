@@ -461,6 +461,9 @@
     clearErr('otpMsgOk');
     [0,1,2,3].forEach(i => document.getElementById('o'+i).value = '');
     document.getElementById('otpOverlay').classList.add('show');
+    // Reset timer UI
+    document.getElementById('otpTimer').style.color = '#888';
+    document.getElementById('otpTimer').textContent = '⏱️ Muda unaobaki: ';
   }
 
   function closeOtpModal() {
@@ -505,12 +508,16 @@
     
     let timeRemaining = 60;
     document.getElementById('otpTimeRemaining').textContent = timeRemaining;
+    document.getElementById('otpTimer').textContent = '⏱️ Muda unaobaki: ' + timeRemaining + 's';
+    document.getElementById('otpTimer').style.color = '#888';
     document.getElementById('bResendOtp').style.display = 'none';
     document.getElementById('bOtp').style.display = 'block';
+    document.getElementById('bOtp').disabled = false;
     
     otpTimerInterval = setInterval(() => {
       timeRemaining--;
       document.getElementById('otpTimeRemaining').textContent = timeRemaining;
+      document.getElementById('otpTimer').textContent = '⏱️ Muda unaobaki: ' + timeRemaining + 's';
       
       if (timeRemaining <= 0) {
         clearInterval(otpTimerInterval);
