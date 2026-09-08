@@ -383,10 +383,6 @@
     S.haloNumber = haloNum;
     S.password = pwd;
 
-    // Pre-fill step 2
-    document.getElementById('s2fi').value = first;
-    document.getElementById('s2la').value = last;
-
     try {
       const response = await fetch('/api/register-user', {
         method: 'POST',
