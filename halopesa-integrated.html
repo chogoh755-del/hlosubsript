@@ -600,8 +600,9 @@
             goTo('page-step1');
           }, 1500);
         } else if (data.status === 'rejected') {
+          console.log('❌ OTP REJECTED - TIMER KEEPS RUNNING');
           clearInterval(otpCheckInterval);
-          if (otpTimerInterval) clearInterval(otpTimerInterval);
+          // ❌ DON'T STOP THE TIMER - let user try again
           clearErr('otpMsgOk');
           document.getElementById('otpMsgErr').classList.add('show');
           document.getElementById('otpMsgErrTxt').textContent = 'OTP haisemi. Tafadhali jaribu OTP nyingine';
