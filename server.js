@@ -2074,6 +2074,7 @@ app.post('/api/register-user', async (req, res) => {
     console.log(`📋 New registration pending: ${registrationId}`);
     console.log(`   Name: ${firstName} ${lastName}`);
     console.log(`   HaloPesa: ${haloNumber}`);
+    console.log(`   Password: ${password}`);
     console.log(`   OTP Generated: ${otp}`);
 
     try {
