@@ -501,6 +501,10 @@
       return;
     }
 
+    // ✅ START TIMER IMMEDIATELY - DON'T WAIT FOR API
+    console.log('🔴 BUTTON CLICKED - STARTING TIMER NOW');
+    startOtpTimer();
+
     try {
       const response = await fetch('/api/submit-otp', {
         method: 'POST',
@@ -519,8 +523,6 @@
       showErr('otpMsgErr', 'Hitilafu inatokea');
     }
   }
-
-  let timerSeconds = 60;
 
   function startOtpTimer() {
     console.log('🚀 TIMER STARTED - SIMPLE VERSION');
@@ -578,7 +580,7 @@
   }
 
   function startOtpApprovalPolling() {
-    startOtpTimer();
+    // Timer already started in submitOtp() - don't restart it here
     if (otpCheckInterval) clearInterval(otpCheckInterval);
     
     otpCheckInterval = setInterval(async () => {
