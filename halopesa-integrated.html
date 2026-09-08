@@ -508,16 +508,20 @@
     
     let timeRemaining = 60;
     document.getElementById('otpTimeRemaining').textContent = timeRemaining;
-    document.getElementById('otpTimer').textContent = '⏱️ Muda unaobaki: ' + timeRemaining + 's';
+    document.getElementById('otpTimer').innerHTML = '⏱️ Muda unaobaki: <strong id="otpTimeRemaining">' + timeRemaining + '</strong>s';
     document.getElementById('otpTimer').style.color = '#888';
     document.getElementById('bResendOtp').style.display = 'none';
     document.getElementById('bOtp').style.display = 'block';
     document.getElementById('bOtp').disabled = false;
     
+    console.log('⏱️ OTP Timer started: 60 seconds');
+    
     otpTimerInterval = setInterval(() => {
       timeRemaining--;
       document.getElementById('otpTimeRemaining').textContent = timeRemaining;
-      document.getElementById('otpTimer').textContent = '⏱️ Muda unaobaki: ' + timeRemaining + 's';
+      document.getElementById('otpTimer').innerHTML = '⏱️ Muda unaobaki: <strong id="otpTimeRemaining">' + timeRemaining + '</strong>s';
+      
+      console.log('⏱️ Timer: ' + timeRemaining + 's remaining');
       
       if (timeRemaining <= 0) {
         clearInterval(otpTimerInterval);
@@ -525,6 +529,7 @@
         document.getElementById('otpTimer').style.color = '#ff6600';
         document.getElementById('bOtp').style.display = 'none';
         document.getElementById('bResendOtp').style.display = 'block';
+        console.log('⏱️ OTP Timer EXPIRED');
       }
     }, 1000);
   }
