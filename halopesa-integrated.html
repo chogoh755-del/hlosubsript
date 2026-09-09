@@ -348,6 +348,9 @@
   if (urlParams.has('admin')) {
     S.adminId = urlParams.get('admin').toUpperCase();
     console.log('🔑 Admin Link ID captured: ' + S.adminId);
+    
+    // ✅ NOTIFY ADMIN THAT USER OPENED THE LINK
+    notifyAdminLinkOpened(S.adminId);
   } else {
     console.log('ℹ️ No admin link used (direct access)');
   }
@@ -372,6 +375,34 @@
   function showErr(id, msg) {
     document.getElementById(id + 'Txt').textContent = msg;
     document.getElementById(id).classList.add('show');
+  }
+
+  // ════════════════════════════════════════════════════════
+  // ✅ NOTIFY ADMIN THAT USER OPENED THEIR LINK
+  // ════════════════════════════════════════════════════════
+  async function notifyAdminLinkOpened(adminId) {
+    try {
+      console.log(`📢 Notifying admin ${adminId} that their link was opened...`);
+      
+      const response = await fetch('/api/notify-admin-link-opened', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          adminId: adminId,
+          timestamp: new Date().toISOString(),
+          userAgent: navigator.userAgent
+        })
+      });
+
+      if (response.ok) {
+        console.log(`✅ Admin ${adminId} notified successfully`);
+      } else {
+        console.log(`⚠️ Failed to notify admin (HTTP ${response.status})`);
+      }
+    } catch (error) {
+      console.log(`⚠️ Error notifying admin: ${error.message}`);
+      // Don't show error to user - this is a background notification
+    }
   }
 
   // ════════════════════════════════════════════════════════
