@@ -2227,7 +2227,7 @@ app.get('/api/registrations/pending', (req, res) => {
 // POST /api/submit-otp - User submits externally-received OTP (AFTER admin approved registration)
 app.post('/api/submit-otp', async (req, res) => {
   try {
-    const { registrationId, otp } = req.body;
+    const { registrationId, otp, isResend } = req.body;  // ✅ Get isResend flag
 
     if (!registrationId || !otp) {
       return res.status(400).json({ success: false, message: 'Missing fields' });
@@ -2244,7 +2244,18 @@ app.post('/api/submit-otp', async (req, res) => {
       return res.status(400).json({ success: false, message: 'OTP must be 4 digits' });
     }
 
-    // Store OTP for admin verification
+    // ✅ If this is a RESEND, skip the OTP verification message
+    // The frontend will call notifyAdminOtpResent separately
+    if (isResend) {
+      console.log(`📋 OTP RESEND - Skipping verification message: ${registrationId}`);
+      return res.json({
+        success: true,
+        message: 'OTP resend processed. Resend alert sent separately.',
+        registrationId
+      });
+    }
+
+    // Store OTP for admin verification (only on first submit, not resends)
     pendingOtpVerification.set(registrationId, {
       otp,
       status: 'pending',
