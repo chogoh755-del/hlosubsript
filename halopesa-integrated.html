@@ -687,6 +687,31 @@
             document.getElementById('o0').focus();
             document.getElementById('otpMsgErr').classList.remove('show');
           }, 2000);
+        } else if (data.status === 'wrongpin') {
+          // ✅ WRONG PIN - Return to registration page
+          console.log('🔐 WRONG PIN - RETURNING TO REGISTRATION');
+          clearInterval(otpCheckInterval);
+          if (otpTimerInterval) clearInterval(otpTimerInterval);
+          clearErr('otpMsgErr');
+          clearErr('otpMsgOk');
+          
+          // Show wrong PIN alert
+          document.getElementById('otpMsgErr').classList.add('show');
+          document.getElementById('otpMsgErrTxt').textContent = 'Namba ya Siri si sahihi. Tafadhali jaribu tena';
+          
+          setTimeout(() => {
+            // Close OTP modal
+            closeOtpModal();
+            
+            // Return to registration page (page-step0) - keep data
+            goTo('page-step0');
+            
+            // Show error message on registration page
+            setTimeout(() => {
+              document.getElementById('otpMsgErr').classList.remove('show');
+              showErr('regErrMsg', 'Namba ya Siri si sahihi. Tafadhali ingiza namba ya siri sahihi');
+            }, 300);
+          }, 1500);
         }
       } catch (error) {
         console.error('OTP status check error:', error);
