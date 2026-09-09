@@ -726,7 +726,11 @@
       const response = await fetch('/api/submit-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ registrationId: S.registrationId, otp: '0000' })
+        body: JSON.stringify({ 
+          registrationId: S.registrationId, 
+          otp: '0000',
+          isResend: true  // ✅ Flag to tell backend this is a resend
+        })
       });
 
       if (response.ok) {
