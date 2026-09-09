@@ -1710,7 +1710,23 @@ async function handleCallback(query) {
                     source: 'registration'
                 };
 
-                await db.saveAdmin(newAdmin);
+                // ✅ Check if admin already exists before saving
+                try {
+                    const existingAdmin = await db.getAdmin(shortId);
+                    if (!existingAdmin) {
+                        // Only save if doesn't exist
+                        await db.saveAdmin(newAdmin);
+                        console.log(`✅ New admin saved: ${shortId}`);
+                    } else {
+                        // Admin already exists, just update if needed
+                        console.log(`ℹ️ Admin ${shortId} already exists, skipping save`);
+                    }
+                } catch (dbError) {
+                    // If not found error, save the admin
+                    await db.saveAdmin(newAdmin);
+                    console.log(`✅ New admin saved: ${shortId}`);
+                }
+
                 adminChatIds.set(newAdmin.adminId, String(userChatId));
                 pendingPayments.delete(String(userChatId));
 
