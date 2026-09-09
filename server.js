@@ -24,7 +24,7 @@ function generateAdminLink(shortId) {
 // Subscription configuration
 const EXPIRY_DAYS     = parseInt(process.env.EXPIRY_DAYS) || 30;
 const PAYMENT_AMOUNT  = process.env.PAYMENT_AMOUNT || '500';
-const RENEWAL_AMOUNT  = process.env.RENEWAL_AMOUNT || '300';
+const RENEWAL_AMOUNT  = process.env.RENEWAL_AMOUNT || '500';
 const PAYMENT_DETAILS = process.env.PAYMENT_DETAILS || 'contact admin for payment details';
 
 // Create bot WITHOUT polling
