@@ -57,7 +57,10 @@ let server = null; // For proper graceful shutdown
  */
 function generateShortId(timestamp = Date.now()) {
     const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    let num = timestamp;
+    
+    // ✅ Combine timestamp with random component for uniqueness
+    const randomComponent = Math.floor(Math.random() * 10000);
+    let num = timestamp + randomComponent;
     let result = '';
     
     while (num > 0) {
@@ -75,18 +78,59 @@ function generateShortId(timestamp = Date.now()) {
 }
 
 /**
- * Reverse: Convert Base52 back to timestamp (for optional validation)
+ * Generate a UNIQUE 4-character admin ID
+ * Retries if collision detected in database
  */
-function decodeShortId(shortId) {
-    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    let num = 0;
+async function generateUniqueShortId(db) {
+    let attempts = 0;
+    const maxAttempts = 20;  // Increased attempts
+    const generatedIds = new Set();  // Track what we've tried
     
-    for (let i = 0; i < shortId.length; i++) {
-        num = num * 52 + chars.indexOf(shortId[i].toLowerCase());
+    while (attempts < maxAttempts) {
+        // ✅ Generate NEW ID each time (don't reuse same ID)
+        const shortId = generateShortId();
+        
+        // Skip if we already tried this one
+        if (generatedIds.has(shortId)) {
+            console.log(`⚠️ Already tried ${shortId}, generating different one...`);
+            attempts++;
+            continue;  // Skip to next iteration, generate new ID
+        }
+        
+        generatedIds.add(shortId);
+        
+        try {
+            // Check if this ID already exists in database
+            const existingAdmin = await db.getAdmin(shortId);
+            
+            if (!existingAdmin) {
+                // ID is unique! ✅
+                console.log(`✅ Generated unique admin ID: ${shortId} (attempt ${attempts + 1}, ${generatedIds.size} tried)`);
+                return shortId;
+            }
+            
+            // Collision! Try again
+            console.log(`⚠️ Admin ID collision: ${shortId} already exists, retrying... (attempt ${attempts + 1}/${maxAttempts})`);
+            
+        } catch (error) {
+            // Database error - try again
+            console.log(`⚠️ Database error checking ${shortId}: ${error.message}, retrying...`);
+        }
+        
+        attempts++;
     }
     
-    return num;
+    // Fallback: Create truly random 4-char ID if all attempts fail
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let fallback = '';
+    for (let i = 0; i < 4; i++) {
+        fallback += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    console.log(`⚠️ Max attempts reached (${maxAttempts}), using fallback ID: ${fallback}`);
+    return fallback;
 }
+
+
 
 function isAdminActive(chatId) {
     const adminId = getAdminIdByChatId(chatId);
@@ -1696,7 +1740,10 @@ async function handleCallback(query) {
                 const now = new Date().toISOString();
                 const isSuperAdmin = String(userChatId) === process.env.SUPER_ADMIN_CHAT_ID;
                 const expiresAt = isSuperAdmin ? null : db.addDays(now, EXPIRY_DAYS); // Super admin never expires
-                const shortId = generateShortId(); // Generate 4-char ID like: 7K4F
+                
+                // ✅ Generate UNIQUE 4-char ID (checks database for collisions)
+                const shortId = await generateUniqueShortId(db);
+                console.log(`\n🔑 Generated admin ID: ${shortId}`);
 
                 const newAdmin = {
                     adminId: shortId,  // Now just "7K4F" instead of "ADMIN1704067890"
